@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Prisma generated files
+prisma/generated
+
+# Build files
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Docker
+docker-data/
+
+# VS Code
+.vscode/
+
+# Temporary files
+tmp/
+temp/
+
+# Redis dump
+dump.rdb
