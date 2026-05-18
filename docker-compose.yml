@@ -53,6 +53,20 @@ services:
     depends_on:
       - postgres
 
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api_gateway
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/api-gateway:/app
+      - /app/node_modules
+    env_file:
+      - ./services/api-gateway/.env
+    depends_on:
+      - auth-service
+
 volumes:
   postgres_data:
   mongo_data:
