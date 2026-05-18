@@ -96,6 +96,21 @@ services:
     depends_on:
       - mongodb
       - rabbitmq
+  
+  comment-service:
+    build: ./services/comment-service
+    container_name: comment_service
+    restart: always
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./services/comment-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/comment-service/.env
+    depends_on:
+      - mongodb
+      - rabbitmq
 
 volumes:
   postgres_data:
