@@ -22,7 +22,16 @@ const connectRabbitMQ =
     } catch (error) {
 
       console.log(
-        error.message
+        "RabbitMQ Connection Failed"
+      );
+
+      console.log(
+        "Retrying in 5 seconds..."
+      );
+
+      setTimeout(
+        connectRabbitMQ,
+        5000
       );
 
     }

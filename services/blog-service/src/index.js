@@ -7,7 +7,10 @@ import dotenv from "dotenv";
 import connectDB from
 "./config/db.js";
 
-import connectRabbitMQ from
+import connectRabbitMQ,
+{
+  getChannel,
+} from
 "./rabbitmq/connection.js";
 
 import blogRoutes from
@@ -34,12 +37,35 @@ app.get("/", (req, res) => {
 
 });
 
+const waitForRabbitMQ =
+  async () => {
+
+    while (!getChannel()) {
+
+      console.log(
+        "Waiting for RabbitMQ..."
+      );
+
+      await new Promise(
+        (resolve) =>
+          setTimeout(
+            resolve,
+            2000
+          )
+      );
+
+    }
+
+  };
+
 const startServer =
   async () => {
 
     await connectDB();
 
-    await connectRabbitMQ();
+    connectRabbitMQ();
+
+    await waitForRabbitMQ();
 
     const PORT =
       process.env.PORT || 8002;

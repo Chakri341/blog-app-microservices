@@ -81,6 +81,21 @@ services:
     depends_on:
       - mongodb
       - rabbitmq
+  
+  notification-service:
+    build: ./services/notification-service
+    container_name: notification_service
+    restart: always
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./services/notification-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/notification-service/.env
+    depends_on:
+      - mongodb
+      - rabbitmq
 
 volumes:
   postgres_data:
