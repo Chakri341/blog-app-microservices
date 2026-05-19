@@ -12,6 +12,8 @@ import {
 import cloudinary from
   "../config/cloudinary.js";
 
+import emailQueue from "../jobs/email.queue.js";
+
 export const createBlog =
   async (req, res) => {
 
@@ -87,6 +89,33 @@ export const createBlog =
 
           authorId:
             blog.authorId,
+        }
+
+      );
+
+      await emailQueue.add(
+
+        "send-blog-email",
+
+        {
+
+          email:
+            "admin@blog.com",
+
+          blogTitle:
+            blog.title,
+
+        },
+
+        {
+
+          attempts: 3,
+
+          backoff: {
+            type: "exponential",
+            delay: 3000,
+          },
+
         }
 
       );

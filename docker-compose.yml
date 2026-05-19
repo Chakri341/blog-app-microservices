@@ -112,6 +112,18 @@ services:
       - mongodb
       - rabbitmq
 
+  worker-service:
+    build: ./services/worker-service
+    container_name: worker_service
+    restart: always
+    volumes:
+      - ./services/worker-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/worker-service/.env
+    depends_on:
+      - redis
+
 volumes:
   postgres_data:
   mongo_data:
