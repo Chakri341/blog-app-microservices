@@ -7,6 +7,9 @@ import dotenv from "dotenv";
 import connectDB from
 "./config/db.js";
 
+import connectRedis from
+"./config/redis.js";
+
 import connectRabbitMQ,
 {
   getChannel,
@@ -62,6 +65,8 @@ const startServer =
   async () => {
 
     await connectDB();
+
+    await connectRedis();
 
     connectRabbitMQ();
 

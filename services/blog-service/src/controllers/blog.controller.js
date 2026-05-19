@@ -4,6 +4,11 @@ import Blog from
 import publishEvent from
 "../rabbitmq/publisher.js";
 
+import {
+  getRedisClient,
+} from
+"../config/redis.js";
+
 export const createBlog =
   async (req, res) => {
 
@@ -34,6 +39,17 @@ export const createBlog =
             req.user.id,
 
         });
+
+      // CLEAR CACHE
+
+      const redisClient =
+        getRedisClient();
+
+      await redisClient.del(
+        "all_blogs"
+      );
+
+      // PUBLISH EVENT
 
       await publishEvent(
 
@@ -80,11 +96,58 @@ export const getBlogs =
 
     try {
 
+      const redisClient =
+        getRedisClient();
+
+      const cachedBlogs =
+        await redisClient.get(
+          "all_blogs"
+        );
+
+      // CACHE HIT
+
+      if (cachedBlogs) {
+
+        console.log(
+          "Fetching blogs from Redis"
+        );
+
+        return res.json({
+
+          success: true,
+
+          blogs:
+            JSON.parse(
+              cachedBlogs
+            ),
+
+        });
+
+      }
+
+      // CACHE MISS
+
+      console.log(
+        "Fetching blogs from MongoDB"
+      );
+
       const blogs =
         await Blog.find()
           .sort({
             createdAt: -1,
           });
+
+      await redisClient.set(
+
+        "all_blogs",
+
+        JSON.stringify(blogs),
+
+        {
+          EX: 60,
+        }
+
+      );
 
       res.json({
 
@@ -114,6 +177,44 @@ export const getSingleBlog =
 
     try {
 
+      const redisClient =
+        getRedisClient();
+
+      const cacheKey =
+        `blog_${req.params.id}`;
+
+      const cachedBlog =
+        await redisClient.get(
+          cacheKey
+        );
+
+      // CACHE HIT
+
+      if (cachedBlog) {
+
+        console.log(
+          "Fetching single blog from Redis"
+        );
+
+        return res.json({
+
+          success: true,
+
+          blog:
+            JSON.parse(
+              cachedBlog
+            ),
+
+        });
+
+      }
+
+      // CACHE MISS
+
+      console.log(
+        "Fetching single blog from MongoDB"
+      );
+
       const blog =
         await Blog.findById(
           req.params.id
@@ -131,6 +232,18 @@ export const getSingleBlog =
         });
 
       }
+
+      await redisClient.set(
+
+        cacheKey,
+
+        JSON.stringify(blog),
+
+        {
+          EX: 60,
+        }
+
+      );
 
       res.json({
 
@@ -207,6 +320,19 @@ export const updateBlog =
 
         );
 
+      // CLEAR CACHE
+
+      const redisClient =
+        getRedisClient();
+
+      await redisClient.del(
+        "all_blogs"
+      );
+
+      await redisClient.del(
+        `blog_${req.params.id}`
+      );
+
       res.json({
 
         success: true,
@@ -271,6 +397,19 @@ export const deleteBlog =
 
       await Blog.findByIdAndDelete(
         req.params.id
+      );
+
+      // CLEAR CACHE
+
+      const redisClient =
+        getRedisClient();
+
+      await redisClient.del(
+        "all_blogs"
+      );
+
+      await redisClient.del(
+        `blog_${req.params.id}`
       );
 
       res.json({
