@@ -47,6 +47,16 @@ const blogSchema =
     }
   );
 
+blogSchema.index({
+
+  title: "text",
+
+  content: "text",
+
+  tags: "text",
+
+});
+
 const Blog =
   mongoose.model(
     "Blog",

@@ -9,8 +9,8 @@ import {
 } from
   "../config/redis.js";
 
-  import cloudinary from
-"../config/cloudinary.js";
+import cloudinary from
+  "../config/cloudinary.js";
 
 export const createBlog =
   async (req, res) => {
@@ -124,12 +124,28 @@ export const getBlogs =
       const redisClient =
         getRedisClient();
 
+      // QUERY PARAMS
+
+      const {
+        q,
+        category,
+        status,
+        page = 1,
+        limit = 10,
+        sort = "latest",
+      } = req.query;
+
+      // CACHE KEY
+
+      const cacheKey =
+        `blogs:${JSON.stringify(req.query)}`;
+
+      // CHECK CACHE
+
       const cachedBlogs =
         await redisClient.get(
-          "all_blogs"
+          cacheKey
         );
-
-      // CACHE HIT
 
       if (cachedBlogs) {
 
@@ -137,36 +153,110 @@ export const getBlogs =
           "Fetching blogs from Redis"
         );
 
-        return res.json({
-
-          success: true,
-
-          blogs:
-            JSON.parse(
-              cachedBlogs
-            ),
-
-        });
+        return res.json(
+          JSON.parse(cachedBlogs)
+        );
 
       }
-
-      // CACHE MISS
 
       console.log(
         "Fetching blogs from MongoDB"
       );
 
+      // FILTER OBJECT
+
+      const filters = {};
+
+      // SEARCH
+
+      if (q) {
+
+        filters.$text = {
+          $search: q,
+        };
+
+      }
+
+      // CATEGORY
+
+      if (category) {
+
+        filters.category =
+          category;
+
+      }
+
+      // STATUS
+
+      if (status) {
+
+        filters.status =
+          status;
+
+      }
+
+      // SORTING
+
+      let sortOption = {
+        createdAt: -1,
+      };
+
+      if (sort === "oldest") {
+
+        sortOption = {
+          createdAt: 1,
+        };
+
+      }
+
+      // PAGINATION
+
+      const skip =
+        (page - 1) * limit;
+
+      // DATABASE QUERY
+
       const blogs =
-        await Blog.find()
-          .sort({
-            createdAt: -1,
-          });
+        await Blog.find(filters)
+
+          .sort(sortOption)
+
+          .skip(skip)
+
+          .limit(Number(limit));
+
+      // TOTAL COUNT
+
+      const total =
+        await Blog.countDocuments(
+          filters
+        );
+
+      const response = {
+
+        success: true,
+
+        total,
+
+        currentPage:
+          Number(page),
+
+        totalPages:
+          Math.ceil(
+            total / limit
+          ),
+
+        blogs,
+
+      };
+
+      // STORE CACHE
 
       await redisClient.set(
 
-        "all_blogs",
+        cacheKey,
 
-        JSON.stringify(blogs),
+        JSON.stringify(response),
 
         {
           EX: 60,
@@ -174,15 +264,11 @@ export const getBlogs =
 
       );
 
-      res.json({
-
-        success: true,
-
-        blogs,
-
-      });
+      res.json(response);
 
     } catch (error) {
+
+      console.log(error);
 
       res.status(500).json({
 
