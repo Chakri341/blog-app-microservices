@@ -29,6 +29,10 @@ const blogSchema =
         },
       ],
 
+      coverImage: {
+        type: String,
+      },
+
       status: {
         type: String,
         enum: [

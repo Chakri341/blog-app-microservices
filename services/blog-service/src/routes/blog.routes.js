@@ -1,7 +1,9 @@
 import express from "express";
 
 import authMiddleware from
-"../middlewares/auth.middleware.js";
+  "../middlewares/auth.middleware.js";
+import upload from
+  "../middlewares/upload.middleware.js";
 
 import {
   createBlog,
@@ -10,7 +12,7 @@ import {
   updateBlog,
   deleteBlog,
 } from
-"../controllers/blog.controller.js";
+  "../controllers/blog.controller.js";
 
 const router =
   express.Router();
@@ -18,6 +20,7 @@ const router =
 router.post(
   "/",
   authMiddleware,
+  upload.single("coverImage"),
   createBlog
 );
 

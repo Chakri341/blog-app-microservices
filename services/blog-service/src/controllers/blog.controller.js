@@ -1,18 +1,23 @@
 import Blog from
-"../models/blog.model.js";
+  "../models/blog.model.js";
 
 import publishEvent from
-"../rabbitmq/publisher.js";
+  "../rabbitmq/publisher.js";
 
 import {
   getRedisClient,
 } from
-"../config/redis.js";
+  "../config/redis.js";
+
+  import cloudinary from
+"../config/cloudinary.js";
 
 export const createBlog =
   async (req, res) => {
 
     try {
+
+      console.log(req.file);
 
       const {
         title,
@@ -22,12 +27,34 @@ export const createBlog =
         status,
       } = req.body;
 
+      let coverImage = "";
+
+      // UPLOAD TO CLOUDINARY
+
+      if (req.file) {
+
+        const result =
+          await cloudinary.uploader.upload(
+            req.file.path,
+            {
+              folder:
+                "blog-platform",
+            }
+          );
+
+        coverImage =
+          result.secure_url;
+
+      }
+
       const blog =
         await Blog.create({
 
           title,
 
           content,
+
+          coverImage,
 
           category,
 
@@ -40,16 +67,12 @@ export const createBlog =
 
         });
 
-      // CLEAR CACHE
-
       const redisClient =
         getRedisClient();
 
       await redisClient.del(
         "all_blogs"
       );
-
-      // PUBLISH EVENT
 
       await publishEvent(
 
@@ -77,6 +100,8 @@ export const createBlog =
       });
 
     } catch (error) {
+
+      console.log(error);
 
       res.status(500).json({
 

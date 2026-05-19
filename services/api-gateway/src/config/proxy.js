@@ -36,6 +36,42 @@ export const blogProxy =
 
     ...commonConfig,
 
+    on: {
+
+      proxyReq: (
+        proxyReq,
+        req
+      ) => {
+
+        // IMPORTANT
+        if (
+          req.body &&
+          Object.keys(req.body).length
+        ) {
+
+          const bodyData =
+            JSON.stringify(req.body);
+
+          proxyReq.setHeader(
+            "Content-Type",
+            "application/json"
+          );
+
+          proxyReq.setHeader(
+            "Content-Length",
+            Buffer.byteLength(
+              bodyData
+            )
+          );
+
+          proxyReq.write(bodyData);
+
+        }
+
+      },
+
+    },
+
   });
 
 export const commentProxy =
