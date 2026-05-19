@@ -4,6 +4,8 @@ import cors from "cors";
 
 import dotenv from "dotenv";
 
+import http from "http";
+
 import connectDB from
 "./config/db.js";
 
@@ -19,9 +21,18 @@ import consumeEvents from
 import notificationRoutes from
 "./routes/notification.routes.js";
 
+import {
+  initSocket,
+} from "./socket/socket.js";
+
 dotenv.config();
 
 const app = express();
+
+const server =
+  http.createServer(app);
+
+initSocket(server);
 
 app.use(cors());
 
@@ -75,7 +86,7 @@ const startServer =
     const PORT =
       process.env.PORT || 8003;
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
 
       console.log(
         `Notification Service running on ${PORT}`

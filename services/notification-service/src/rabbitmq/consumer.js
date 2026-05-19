@@ -1,106 +1,13 @@
-// import {
-//   getChannel,
-// } from "./connection.js";
-
-// import Notification from
-// "../models/notification.model.js";
-
-// const consumeEvents =
-//   async () => {
-
-//     try {
-
-//       const channel =
-//         getChannel();
-
-//       const exchange =
-//         "blog_exchange";
-
-//       const queue =
-//         "notification_blog_queue";
-
-//       await channel.assertExchange(
-
-//         exchange,
-
-//         "topic",
-
-//         {
-//           durable: true,
-//         }
-
-//       );
-
-//       await channel.assertQueue(
-//         queue
-//       );
-
-//       await channel.bindQueue(
-
-//         queue,
-
-//         exchange,
-
-//         "blog.created"
-
-//       );
-
-//       console.log(
-//         "Waiting for blog events..."
-//       );
-
-//       channel.consume(
-
-//         queue,
-
-//         async (message) => {
-
-//           const data =
-//             JSON.parse(
-//               message.content.toString()
-//             );
-
-//           console.log(
-//             "Blog Event Received"
-//           );
-
-//           await Notification.create({
-
-//             type:
-//               "BLOG_CREATED",
-
-//             userId:
-//               data.authorId,
-
-//             message:
-//               `New blog created: ${data.title}`,
-
-//           });
-
-//           channel.ack(message);
-
-//         }
-
-//       );
-
-//     } catch (error) {
-
-//       console.log(
-//         error.message
-//       );
-
-//     }
-
-//   };
-
-// export default consumeEvents;
-
 import {
   getChannel,
 } from "./connection.js";
 
 import Notification from
 "../models/notification.model.js";
+
+import {
+  getIO,
+} from "../socket/socket.js";
 
 const consumeEvents =
   async () => {
@@ -199,18 +106,29 @@ const consumeEvents =
             "Blog Event Received"
           );
 
-          await Notification.create({
+          const notification =
+            await Notification.create({
 
-            type:
-              "BLOG_CREATED",
+              type:
+                "BLOG_CREATED",
 
-            userId:
-              data.authorId,
+              userId:
+                data.authorId,
 
-            message:
-              `New blog created: ${data.title}`,
+              message:
+                `New blog created: ${data.title}`,
 
-          });
+            });
+
+          // REALTIME EVENT
+
+          getIO().emit(
+
+            "notification",
+
+            notification
+
+          );
 
           channel.ack(message);
 
@@ -235,18 +153,29 @@ const consumeEvents =
             "Comment Event Received"
           );
 
-          await Notification.create({
+          const notification =
+            await Notification.create({
 
-            type:
-              "COMMENT_CREATED",
+              type:
+                "COMMENT_CREATED",
 
-            userId:
-              data.userId,
+              userId:
+                data.userId,
 
-            message:
-              `New comment added to blog ${data.blogId}`,
+              message:
+                `New comment added to blog ${data.blogId}`,
 
-          });
+            });
+
+          // REALTIME EVENT
+
+          getIO().emit(
+
+            "notification",
+
+            notification
+
+          );
 
           channel.ack(message);
 
