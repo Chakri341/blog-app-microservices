@@ -123,6 +123,7 @@ export const login =
       res.json({
         success: true,
         token,
+        user,
       });
 
     } catch (error) {

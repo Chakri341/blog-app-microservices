@@ -1,0 +1,44 @@
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import Providers from "@/components/Providers";
+
+import socket from "../socket/socket";
+import RealtimeNotifications
+from "../components/RealtimeNotifications";
+import NotificationBell
+from "../components/NotificationBell";
+import Navbar
+from "../components/Navbar";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata = {
+  title: "Blog Platform",
+  description: "Microservices Blog Platform",
+};
+
+export default function RootLayout({ children }) {
+
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">
+        <Providers>
+          <RealtimeNotifications />
+          <Navbar />
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}

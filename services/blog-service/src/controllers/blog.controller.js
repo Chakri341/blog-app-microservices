@@ -408,76 +408,71 @@ export const getSingleBlog =
 
   };
 
-export const updateBlog =
+export const
+updateBlog =
   async (req, res) => {
 
     try {
 
-      const blog =
-        await Blog.findById(
-          req.params.id
-        );
+      const {
 
-      if (!blog) {
+        title,
 
-        return res.status(404).json({
+        content,
 
-          success: false,
+        category,
 
-          message:
-            "Blog not found",
+        tags,
 
-        });
+      } = req.body;
+
+      // UPDATE DATA
+
+      const updatedData = {
+
+        title,
+
+        content,
+
+        category,
+
+        tags,
+
+      };
+
+      // IMAGE
+
+      if (req.file) {
+
+        updatedData.coverImage =
+
+          req.file.path;
 
       }
 
-      if (
-        blog.authorId !==
-        req.user.id
-      ) {
-
-        return res.status(403).json({
-
-          success: false,
-
-          message:
-            "Unauthorized",
-
-        });
-
-      }
+      // UPDATE BLOG
 
       const updatedBlog =
+
         await Blog.findByIdAndUpdate(
 
           req.params.id,
 
-          req.body,
+          updatedData,
 
           {
+
             new: true,
+
           }
 
         );
 
-      // CLEAR CACHE
-
-      const redisClient =
-        getRedisClient();
-
-      await redisClient.del(
-        "all_blogs"
-      );
-
-      await redisClient.del(
-        `blog_${req.params.id}`
-      );
-
-      res.json({
+      res.status(200).json({
 
         success: true,
 
-        updatedBlog,
+        blog: updatedBlog,
 
       });
 

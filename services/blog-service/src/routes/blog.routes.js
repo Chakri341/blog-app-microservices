@@ -38,9 +38,17 @@ router.get(
 );
 
 router.put(
+
   "/:id",
+
   authMiddleware,
+
+  upload.single(
+    "coverImage"
+  ),
+
   updateBlog
+
 );
 
 router.delete(
