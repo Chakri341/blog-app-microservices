@@ -22,7 +22,10 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin:
+    "https://blog-app-microservices-ten.vercel.app",
+}));
 
 app.use(helmet());
 
