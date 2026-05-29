@@ -360,9 +360,10 @@ export default function SingleBlogPage({ params }) {
           text-gray-800
           whitespace-pre-wrap
         "
-        >
-          {blog?.content}
-        </div>
+          dangerouslySetInnerHTML={{
+            __html: blog.content,
+          }}
+        ></div>
       </div>
 
       {/* COMMENTS */}

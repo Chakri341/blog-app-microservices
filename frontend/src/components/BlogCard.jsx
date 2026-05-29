@@ -99,9 +99,10 @@ export default function BlogCard({ blog }) {
             leading-7
             line-clamp-3
           "
-          >
-            {blog.content}
-          </p>
+            dangerouslySetInnerHTML={{
+              __html: blog.content,
+            }}
+          ></p>
 
           {/* TAGS */}
 
