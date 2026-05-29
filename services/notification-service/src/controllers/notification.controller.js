@@ -1,79 +1,49 @@
-import Notification from
-"../models/notification.model.js";
+import Notification from "../models/notification.model.js";
 
-export const getNotifications =
-  async (req, res) => {
+export const getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find().sort({
+      createdAt: -1,
+    });
 
-    try {
+    res.json({
+      success: true,
 
-      const notifications =
-        await Notification.find()
-          .sort({
-            createdAt: -1,
-          });
+      notifications,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-      res.json({
+      message: error.message,
+    });
+  }
+};
 
-        success: true,
+export const markAsRead = async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndUpdate(
+      req.params.id,
 
-        notifications,
+      {
+        read: true,
+      },
 
-      });
+      {
+        new: true,
+      },
+    );
 
-    } catch (error) {
+    res.json({
+      success: true,
 
-      res.status(500).json({
+      notification,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-        success: false,
-
-        message:
-          error.message,
-
-      });
-
-    }
-
-  };
-
-export const markAsRead =
-  async (req, res) => {
-
-    try {
-
-      const notification =
-        await Notification.findByIdAndUpdate(
-
-          req.params.id,
-
-          {
-            read: true,
-          },
-
-          {
-            new: true,
-          }
-
-        );
-
-      res.json({
-
-        success: true,
-
-        notification,
-
-      });
-
-    } catch (error) {
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-          error.message,
-
-      });
-
-    }
-
-  };
+      message: error.message,
+    });
+  }
+};

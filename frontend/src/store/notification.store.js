@@ -1,103 +1,54 @@
-import { create }
-from "zustand";
+import { create } from "zustand";
 
-const notificationStore =
-  create((set) => ({
+const notificationStore = create((set) => ({
+  notifications: [],
 
-    notifications: [],
+  unreadCount: 0,
 
-    unreadCount: 0,
+  // SET INITIAL
 
-    // SET INITIAL
+  setNotifications: (notifications) =>
+    set({
+      notifications,
 
-    setNotifications:
-      (notifications) =>
+      unreadCount: notifications.filter((n) => !n.read).length,
+    }),
 
-        set({
+  // ADD REALTIME
 
-          notifications,
+  addNotification: (notification) =>
+    set((state) => {
+      const updated = [notification, ...state.notifications];
 
-          unreadCount:
-            notifications.filter(
-              (n) => !n.read
-            ).length,
+      return {
+        notifications: updated,
 
-        }),
+        unreadCount: updated.filter((n) => !n.read).length,
+      };
+    }),
 
-    // ADD REALTIME
+  // MARK READ
 
-    addNotification:
-      (notification) =>
-
-        set((state) => {
-
-          const updated = [
-
-            notification,
-
-            ...state.notifications,
-
-          ];
-
+  markAsRead: (id) =>
+    set((state) => {
+      const updated = state.notifications.map((notification) => {
+        if (notification._id === id) {
           return {
+            ...notification,
 
-            notifications:
-              updated,
-
-            unreadCount:
-              updated.filter(
-                (n) => !n.read
-              ).length,
-
+            read: true,
           };
+        }
 
-        }),
+        return notification;
+      });
 
-    // MARK READ
+      return {
+        notifications: [...updated],
 
-    markAsRead:
-      (id) =>
+        unreadCount: updated.filter((n) => !n.read).length,
+      };
+    }),
+}));
 
-        set((state) => {
-
-          const updated =
-            state.notifications.map(
-              (notification) => {
-
-                if (
-                  notification._id === id
-                ) {
-
-                  return {
-
-                    ...notification,
-
-                    read: true,
-
-                  };
-
-                }
-
-                return notification;
-
-              }
-            );
-
-          return {
-
-            notifications:
-              [...updated],
-
-            unreadCount:
-              updated.filter(
-                (n) => !n.read
-              ).length,
-
-          };
-
-        }),
-
-  }));
-
-export default
-notificationStore;
+export default notificationStore;

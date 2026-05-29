@@ -3,20 +3,12 @@ import express from "express";
 import {
   getNotifications,
   markAsRead,
-} from
-"../controllers/notification.controller.js";
+} from "../controllers/notification.controller.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-router.get(
-  "/",
-  getNotifications
-);
+router.get("/", getNotifications);
 
-router.put(
-  "/:id/read",
-  markAsRead
-);
+router.put("/:id/read", markAsRead);
 
 export default router;

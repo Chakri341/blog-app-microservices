@@ -1,118 +1,56 @@
 "use client";
 
-import {
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-  useQuery,
+import authStore from "../../store/auth.store";
 
-  useMutation,
+import { getComments, createComment } from "../../services/blog.service";
 
-  useQueryClient,
+import CommentItem from "./CommentItem";
 
-} from
-"@tanstack/react-query";
+import CommentForm from "./CommentForm";
 
-import authStore from
-"../../store/auth.store";
+export default function CommentSection({ blogId }) {
+  const token = authStore((state) => state.token);
 
-import {
-
-  getComments,
-
-  createComment,
-
-} from
-"../../services/blog.service";
-
-import CommentItem from
-"./CommentItem";
-
-import CommentForm from
-"./CommentForm";
-
-export default function
-CommentSection({
-  blogId,
-}) {
-
-  const token =
-    authStore(
-      (state) =>
-        state.token
-    );
-
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   const {
-
     data,
 
     isLoading,
-
   } = useQuery({
+    queryKey: ["comments", blogId],
 
-    queryKey: [
-      "comments",
-      blogId,
-    ],
-
-    queryFn: () =>
-      getComments(
-        blogId
-      ),
-
+    queryFn: () => getComments(blogId),
   });
 
-  const mutation =
-    useMutation({
+  const mutation = useMutation({
+    mutationFn: createComment,
 
-      mutationFn:
-        createComment,
-
-      onSuccess: () => {
-
-        queryClient.invalidateQueries({
-
-          queryKey: [
-            "comments",
-            blogId,
-          ],
-
-        });
-
-      },
-
-    });
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", blogId],
+      });
+    },
+  });
 
   // CREATE COMMENT
 
-  const handleComment =
-    (data) => {
+  const handleComment = (data) => {
+    mutation.mutate({
+      blogId,
 
-      mutation.mutate({
-
-        blogId,
-
-        content:
-          data.content,
-
-      });
-
-    };
+      content: data.content,
+    });
+  };
 
   // TOP LEVEL COMMENTS
 
   const topLevelComments =
-    data?.comments?.filter(
-
-      (comment) =>
-
-        !comment.parentComment
-
-    ) || [];
+    data?.comments?.filter((comment) => !comment.parentComment) || [];
 
   return (
-
     <div
       className="
       mt-20
@@ -120,7 +58,6 @@ CommentSection({
       pt-12
     "
     >
-
       {/* HEADER */}
 
       <div
@@ -131,108 +68,61 @@ CommentSection({
         mb-10
       "
       >
-
         <h2
           className="
           text-3xl
           font-bold
         "
         >
-
-          Comments
-          {" "}
+          Comments{" "}
           <span
             className="
             text-gray-500
             text-2xl
           "
           >
-
-            {
-              data?.comments
-                ?.length || 0
-            }
-
+            {data?.comments?.length || 0}
           </span>
-
         </h2>
-
       </div>
 
       {/* ADD COMMENT */}
 
       {token && (
-
         <div
           className="
           mb-12
         "
         >
-
           <CommentForm
-
-            onSubmit={
-              handleComment
-            }
-
-            isPending={
-              mutation.isPending
-            }
-
+            onSubmit={handleComment}
+            isPending={mutation.isPending}
             placeholder="Add a comment..."
-
             buttonText="Comment"
-
           />
-
         </div>
-
       )}
 
       {/* COMMENTS */}
 
       {isLoading ? (
-
-        <p>
-          Loading comments...
-        </p>
-
+        <p>Loading comments...</p>
       ) : (
-
         <div
           className="
           space-y-10
         "
         >
-
-          {topLevelComments.map(
-            (comment) => (
-
-              <CommentItem
-
-                key={
-                  comment._id
-                }
-
-                comment={comment}
-
-                allComments={
-                  data.comments
-                }
-
-                blogId={blogId}
-
-              />
-
-            )
-          )}
-
+          {topLevelComments.map((comment) => (
+            <CommentItem
+              key={comment._id}
+              comment={comment}
+              allComments={data.comments}
+              blogId={blogId}
+            />
+          ))}
         </div>
-
       )}
-
     </div>
-
   );
-
 }

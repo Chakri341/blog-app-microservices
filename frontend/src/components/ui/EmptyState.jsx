@@ -1,23 +1,15 @@
-import Link
-from "next/link";
+import Link from "next/link";
 
-export default function
-EmptyState({
+export default function EmptyState({
+  title = "Nothing Found",
 
-  title =
-    "Nothing Found",
-
-  description =
-    "No data available.",
+  description = "No data available.",
 
   buttonText,
 
   buttonLink,
-
 }) {
-
   return (
-
     <div
       className="
       py-24
@@ -28,7 +20,6 @@ EmptyState({
       text-center
     "
     >
-
       {/* ICON */}
 
       <div
@@ -36,9 +27,7 @@ EmptyState({
         text-6xl
       "
       >
-
         📭
-
       </div>
 
       {/* TITLE */}
@@ -50,9 +39,7 @@ EmptyState({
         font-bold
       "
       >
-
         {title}
-
       </h2>
 
       {/* DESCRIPTION */}
@@ -64,22 +51,15 @@ EmptyState({
         max-w-md
       "
       >
-
         {description}
-
       </p>
 
       {/* BUTTON */}
 
-      {buttonText &&
-        buttonLink && (
-
-          <Link
-            href={buttonLink}
-          >
-
-            <button
-              className="
+      {buttonText && buttonLink && (
+        <Link href={buttonLink}>
+          <button
+            className="
               mt-8
               px-6
               py-3
@@ -90,18 +70,11 @@ EmptyState({
               hover:opacity-90
               transition
             "
-            >
-
-              {buttonText}
-
-            </button>
-
-          </Link>
-
+          >
+            {buttonText}
+          </button>
+        </Link>
       )}
-
     </div>
-
   );
-
 }

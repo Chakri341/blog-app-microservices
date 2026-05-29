@@ -1,162 +1,116 @@
 "use client";
 
-import { useForm }
-    from "react-hook-form";
+import { useForm } from "react-hook-form";
 
-import { useRouter }
-    from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import toast from "react-hot-toast";
 
-import {
-    loginUser
-} from "@/services/auth.service";
+import { loginUser } from "@/services/auth.service";
 import authStore from "@/store/auth.store";
 
 export default function LoginPage() {
+  const router = useRouter();
 
-    const router =
-        useRouter();
+  const setAuth = authStore((state) => state.setAuth);
 
-    const setAuth =
-        authStore(
-            (state) =>
-                state.setAuth
-        );
+  const {
+    register,
 
-    const {
+    handleSubmit,
+  } = useForm();
 
-        register,
+  const onSubmit = async (data) => {
+    try {
+      const response = await loginUser(data);
 
-        handleSubmit,
+      console.log("   Response: ", response);
 
-    } = useForm();
+      setAuth(
+        response.user,
 
-    const onSubmit =
-        async (data) => {
+        response.token,
+      );
 
-            try {
+      console.log(
+        "   User: ",
+        response.user,
 
-                const response =
-                    await loginUser(data);
+        "   Token: ",
+        response.token,
+      );
 
-                    console.log("   Response: ", response);
+      toast.success("Login Successful");
 
-                setAuth(
+      router.push("/");
+    } catch (error) {
+      toast.error(error.response?.data?.message);
+    }
+  };
 
-                    response.user,
-
-                    response.token
-
-                );
-
-                console.log("   User: ", response.user,
-
-                    "   Token: ", response.token    );
-
-                toast.success(
-                    "Login Successful"
-                );
-
-                router.push("/");
-
-            } catch (error) {
-
-                toast.error(
-                    error.response?.data?.message
-                );
-
-            }
-
-        };
-
-    return (
-
-        <div
-            className="
+  return (
+    <div
+      className="
       min-h-screen
       flex
       items-center
       justify-center
     "
-        >
-
-            <form
-
-                onSubmit={handleSubmit(
-                    onSubmit
-                )}
-
-                className="
+    >
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="
         w-100
         border
         p-6
         rounded-lg
         space-y-4
       "
-            >
-
-                <h1
-                    className="
+      >
+        <h1
+          className="
           text-2xl
           font-bold
         "
-                >
+        >
+          Login
+        </h1>
 
-                    Login
-
-                </h1>
-
-                <input
-
-                    {...register("email")}
-
-                    placeholder="Email"
-
-                    className="
+        <input
+          {...register("email")}
+          placeholder="Email"
+          className="
           w-full
           border
           p-2
           rounded
         "
-                />
+        />
 
-                <input
-
-                    type="password"
-
-                    {...register(
-                        "password"
-                    )}
-
-                    placeholder="Password"
-
-                    className="
+        <input
+          type="password"
+          {...register("password")}
+          placeholder="Password"
+          className="
           w-full
           border
           p-2
           rounded
         "
-                />
+        />
 
-                <button
-                    className="
+        <button
+          className="
           bg-black
           text-white
           px-4
           py-2
           rounded
         "
-                >
-
-                    Login
-
-                </button>
-
-            </form>
-
-        </div>
-
-    );
-
+        >
+          Login
+        </button>
+      </form>
+    </div>
+  );
 }

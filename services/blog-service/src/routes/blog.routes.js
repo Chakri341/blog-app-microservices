@@ -1,9 +1,7 @@
 import express from "express";
 
-import authMiddleware from
-  "../middlewares/auth.middleware.js";
-import upload from
-  "../middlewares/upload.middleware.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 
 import roleMiddleware from "../middlewares/role.middleware.js";
 
@@ -13,72 +11,47 @@ import {
   getSingleBlog,
   updateBlog,
   deleteBlog,
-  getAllBlogsAdmin
-} from
-  "../controllers/blog.controller.js";
+  getAllBlogsAdmin,
+} from "../controllers/blog.controller.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-router.post(
-  "/",
-  authMiddleware,
-  upload.single("coverImage"),
-  createBlog
-);
+router.post("/", authMiddleware, upload.single("coverImage"), createBlog);
 
-router.get(
-  "/",
-  getBlogs
-);
+router.get("/", getBlogs);
 
-router.get(
-  "/:id",
-  getSingleBlog
-);
+router.get("/:id", getSingleBlog);
 
 router.put(
-
   "/:id",
 
   authMiddleware,
 
-  upload.single(
-    "coverImage"
-  ),
+  upload.single("coverImage"),
 
-  updateBlog
-
+  updateBlog,
 );
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  deleteBlog
-);
+router.delete("/:id", authMiddleware, deleteBlog);
 
 router.delete(
-
   "/admin/:id",
 
   authMiddleware,
 
   roleMiddleware("ADMIN"),
 
-  deleteBlog
-
+  deleteBlog,
 );
 
 router.get(
-
   "/admin/all",
 
   authMiddleware,
 
   roleMiddleware("ADMIN"),
 
-  getAllBlogsAdmin
-
+  getAllBlogsAdmin,
 );
 
 export default router;

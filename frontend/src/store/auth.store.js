@@ -1,72 +1,41 @@
-import { create }
-from "zustand";
+import { create } from "zustand";
 
-const authStore =
-  create((set) => ({
+const authStore = create((set) => ({
+  // INITIAL STATE
 
-    // INITIAL STATE
+  user:
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "null")
+      : null,
 
-    user:
+  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
 
-      typeof window !==
-      "undefined"
+  // LOGIN
+  login: (data) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    set({ token: data.token, user: data.user });
+  },
 
-        ? JSON.parse(
+  // SET AUTH (for direct setting from login page)
+  setAuth: (user, token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    set({ token, user });
+  },
 
-            localStorage.getItem(
-              "user"
-            ) || "null"
+  // LOGOUT
 
-          )
+  logout: () => {
+    localStorage.removeItem("token");
 
-        : null,
+    localStorage.removeItem("user");
 
-    token:
+    set({
+      token: null,
+      user: null,
+    });
+  },
+}));
 
-      typeof window !==
-      "undefined"
-
-        ? localStorage.getItem(
-            "token"
-          )
-
-        : null,
-
-
-    // LOGIN
-    login: (data) => {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      set({ token: data.token, user: data.user });
-    },
-
-    // SET AUTH (for direct setting from login page)
-    setAuth: (user, token) => {
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      set({ token, user });
-    },
-
-    // LOGOUT
-
-    logout: () => {
-
-      localStorage.removeItem(
-        "token"
-      );
-
-      localStorage.removeItem(
-        "user"
-      );
-
-      set({
-        token: null,
-        user: null,
-      });
-
-    },
-
-  }));
-
-export default
-authStore;
+export default authStore;

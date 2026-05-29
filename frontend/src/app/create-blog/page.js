@@ -1,141 +1,69 @@
 "use client";
 
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
-import {
-  useForm,
-} from
-"react-hook-form";
+import { useForm } from "react-hook-form";
 
-import {
-  useMutation,
-} from
-"@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
-import {
-  useRouter,
-} from
-"next/navigation";
+import { useRouter } from "next/navigation";
 
-import toast
-from "react-hot-toast";
+import toast from "react-hot-toast";
 
-import useProtectedRoute
-from "../../hooks/useProtectedRoute";
+import useProtectedRoute from "../../hooks/useProtectedRoute";
 
-import RichTextEditor
-from "@/components/editor/RichTextEditor";
+import RichTextEditor from "@/components/editor/RichTextEditor";
 
-import {
-  createBlog,
-} from
-"../../services/blog.service";
+import { createBlog } from "../../services/blog.service";
 
-export default function
-CreateBlogPage() {
-
+export default function CreateBlogPage() {
   useProtectedRoute();
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const [
-
-    content,
-
-    setContent,
-
-  ] = useState("");
+  const [content, setContent] = useState("");
 
   const {
-
     register,
 
     handleSubmit,
-
   } = useForm();
 
-  const mutation =
-    useMutation({
+  const mutation = useMutation({
+    mutationFn: createBlog,
 
-      mutationFn:
-        createBlog,
+    onSuccess: () => {
+      toast.success("Blog Created");
 
-      onSuccess: () => {
+      router.push("/");
+    },
 
-        toast.success(
-          "Blog Created"
-        );
+    onError: (error) => {
+      toast.error(error.response?.data?.message);
+    },
+  });
 
-        router.push("/");
+  const onSubmit = (data) => {
+    const formData = new FormData();
 
-      },
+    formData.append("title", data.title);
 
-      onError: (error) => {
+    formData.append("content", content);
 
-        toast.error(
+    formData.append("category", data.category);
 
-          error.response
-            ?.data?.message
+    formData.append("status", data.status);
 
-        );
+    formData.append("tags", data.tags);
 
-      },
+    if (data.coverImage?.[0]) {
+      formData.append("coverImage", data.coverImage[0]);
+    }
 
-    });
-
-  const onSubmit =
-    (data) => {
-
-      const formData =
-        new FormData();
-
-      formData.append(
-        "title",
-        data.title
-      );
-
-      formData.append(
-        "content",
-        content
-      );
-
-      formData.append(
-        "category",
-        data.category
-      );
-
-      formData.append(
-        "status",
-        data.status
-      );
-
-      formData.append(
-        "tags",
-        data.tags
-      );
-
-      if (
-        data.coverImage?.[0]
-      ) {
-
-        formData.append(
-          "coverImage",
-          data.coverImage[0]
-        );
-
-      }
-
-      mutation.mutate(
-        formData
-      );
-
-    };
+    mutation.mutate(formData);
+  };
 
   return (
-
     <div
       className="
       max-w-3xl
@@ -144,18 +72,12 @@ CreateBlogPage() {
       py-10
     "
     >
-
       <form
-
-        onSubmit={handleSubmit(
-          onSubmit
-        )}
-
+        onSubmit={handleSubmit(onSubmit)}
         className="
         space-y-6
       "
       >
-
         {/* TITLE */}
 
         <h1
@@ -165,19 +87,14 @@ CreateBlogPage() {
           mb-8
         "
         >
-
           Create Blog
-
         </h1>
 
         <input
-
           {...register("title")}
-
           placeholder="
           Blog title
           "
-
           className="
           w-full
           border
@@ -190,15 +107,10 @@ CreateBlogPage() {
         {/* CATEGORY */}
 
         <input
-
-          {...register(
-            "category"
-          )}
-
+          {...register("category")}
           placeholder="
           Category
           "
-
           className="
           w-full
           border
@@ -211,13 +123,10 @@ CreateBlogPage() {
         {/* TAGS */}
 
         <input
-
           {...register("tags")}
-
           placeholder="
           react,nextjs,nodejs
           "
-
           className="
           w-full
           border
@@ -230,11 +139,7 @@ CreateBlogPage() {
         {/* STATUS */}
 
         <select
-
-          {...register(
-            "status"
-          )}
-
+          {...register("status")}
           className="
           w-full
           border
@@ -243,21 +148,9 @@ CreateBlogPage() {
           outline-none
         "
         >
+          <option value="draft">Draft</option>
 
-          <option value="draft">
-
-            Draft
-
-          </option>
-
-          <option
-            value="published"
-          >
-
-            Published
-
-          </option>
-
+          <option value="published">Published</option>
         </select>
 
         {/* IMAGE */}
@@ -276,49 +169,25 @@ CreateBlogPage() {
           transition
         "
         >
-
-          <input
-
-            type="file"
-
-            hidden
-
-            {...register(
-              "coverImage"
-            )}
-
-          />
+          <input type="file" hidden {...register("coverImage")} />
 
           <span
             className="
             text-gray-500
           "
           >
-
             Upload Cover Image
-
           </span>
-
         </label>
 
         {/* CONTENT */}
 
-        <RichTextEditor
-
-          value={content}
-
-          setValue={setContent}
-
-        />
+        <RichTextEditor value={content} setValue={setContent} />
 
         {/* BUTTON */}
 
         <button
-
-          disabled={
-            mutation.isPending
-          }
-
+          disabled={mutation.isPending}
           className="
           bg-black
           text-white
@@ -329,19 +198,9 @@ CreateBlogPage() {
           disabled:opacity-50
         "
         >
-
-          {mutation.isPending
-
-            ? "Creating..."
-
-            : "Create Blog"}
-
+          {mutation.isPending ? "Creating..." : "Create Blog"}
         </button>
-
       </form>
-
     </div>
-
   );
-
 }

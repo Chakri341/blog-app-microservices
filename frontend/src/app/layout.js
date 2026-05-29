@@ -3,12 +3,9 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 import socket from "../socket/socket";
-import RealtimeNotifications
-from "../components/RealtimeNotifications";
-import NotificationBell
-from "../components/NotificationBell";
-import Navbar
-from "../components/Navbar";
+import RealtimeNotifications from "../components/RealtimeNotifications";
+import NotificationBell from "../components/NotificationBell";
+import Navbar from "../components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +23,6 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-
   return (
     <html
       lang="en"

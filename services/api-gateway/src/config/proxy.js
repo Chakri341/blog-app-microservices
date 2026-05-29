@@ -1,101 +1,56 @@
-import {
-  createProxyMiddleware,
-} from "http-proxy-middleware";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const commonConfig = {
-
   changeOrigin: true,
 
   proxyTimeout: 10000,
 
   timeout: 10000,
-
 };
 
-export const authProxy =
-  createProxyMiddleware({
+export const authProxy = createProxyMiddleware({
+  target: process.env.AUTH_SERVICE_URL,
 
-    target:
-      process.env.AUTH_SERVICE_URL,
+  pathFilter: "/api/auth",
 
-    pathFilter:
-      "/api/auth",
+  ...commonConfig,
+});
 
-    ...commonConfig,
+export const blogProxy = createProxyMiddleware({
+  target: process.env.BLOG_SERVICE_URL,
 
-  });
+  pathFilter: "/api/blogs",
 
-export const blogProxy =
-  createProxyMiddleware({
+  ...commonConfig,
 
-    target:
-      process.env.BLOG_SERVICE_URL,
+  on: {
+    proxyReq: (proxyReq, req) => {
+      // IMPORTANT
+      if (req.body && Object.keys(req.body).length) {
+        const bodyData = JSON.stringify(req.body);
 
-    pathFilter:
-      "/api/blogs",
+        proxyReq.setHeader("Content-Type", "application/json");
 
-    ...commonConfig,
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
 
-    on: {
-
-      proxyReq: (
-        proxyReq,
-        req
-      ) => {
-
-        // IMPORTANT
-        if (
-          req.body &&
-          Object.keys(req.body).length
-        ) {
-
-          const bodyData =
-            JSON.stringify(req.body);
-
-          proxyReq.setHeader(
-            "Content-Type",
-            "application/json"
-          );
-
-          proxyReq.setHeader(
-            "Content-Length",
-            Buffer.byteLength(
-              bodyData
-            )
-          );
-
-          proxyReq.write(bodyData);
-
-        }
-
-      },
-
+        proxyReq.write(bodyData);
+      }
     },
+  },
+});
 
-  });
+export const commentProxy = createProxyMiddleware({
+  target: process.env.COMMENT_SERVICE_URL,
 
-export const commentProxy =
-  createProxyMiddleware({
+  pathFilter: "/api/comments",
 
-    target:
-      process.env.COMMENT_SERVICE_URL,
+  ...commonConfig,
+});
 
-    pathFilter:
-      "/api/comments",
+export const notificationProxy = createProxyMiddleware({
+  target: process.env.NOTIFICATION_SERVICE_URL,
 
-    ...commonConfig,
+  pathFilter: "/api/notifications",
 
-  });
-
-export const notificationProxy =
-  createProxyMiddleware({
-
-    target:
-      process.env.NOTIFICATION_SERVICE_URL,
-
-    pathFilter:
-      "/api/notifications",
-
-    ...commonConfig,
-
-  });
+  ...commonConfig,
+});

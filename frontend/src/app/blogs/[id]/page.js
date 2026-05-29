@@ -1,207 +1,104 @@
 "use client";
 
-import {
-  use,
-} from "react";
+import { use } from "react";
 
-import Link
-  from "next/link";
+import Link from "next/link";
 
-import {
-  useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import {
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-  useQuery,
+import toast from "react-hot-toast";
 
-  useMutation,
+import { getSingleBlog, deleteBlog } from "@/services/blog.service";
 
-  useQueryClient,
+import authStore from "@/store/auth.store";
 
-} from
-  "@tanstack/react-query";
+import CommentSection from "@/components/comments/CommentSection";
 
-import toast
-  from "react-hot-toast";
+import BlogCardSkeleton from "@/skeletons/BlogCardSkeleton";
 
-import {
+import ErrorState from "@/components/ui/ErrorState";
 
-  getSingleBlog,
-
-  deleteBlog,
-
-} from
-  "@/services/blog.service";
-
-import authStore
-  from "@/store/auth.store";
-
-import CommentSection
-  from "@/components/comments/CommentSection";
-
-import BlogCardSkeleton
-  from "@/skeletons/BlogCardSkeleton";
-
-import ErrorState
-  from "@/components/ui/ErrorState";
-
-export default function
-  SingleBlogPage({
-
-    params,
-
-  }) {
-
+export default function SingleBlogPage({ params }) {
   // PARAMS
 
-  const resolvedParams =
-    use(params);
+  const resolvedParams = use(params);
 
-  const blogId =
-    resolvedParams.id;
+  const blogId = resolvedParams.id;
 
   // ROUTER
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   // FETCH BLOG
 
-  const {
-
-    data,
-
-    isLoading,
-
-    error,
-
-  } = useQuery({
-
-    queryKey: [
-      "blog",
-      blogId,
-    ],
-
-    queryFn: () =>
-      getSingleBlog(
-        blogId
-      ),
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["blog", blogId],
+    queryFn: () => getSingleBlog(blogId),
     staleTime: 0,
-
   });
 
-  const blog =
-    data?.blog;
+  const blog = data?.blog;
 
   // USER
 
-  const user =
-    authStore(
-      (state) =>
-        state.user
-    );
+  const user = authStore((state) => state.user);
 
   // OWNER CHECK
 
-  const isOwner =
-
-    user?.id ===
-
-    (
-      blog?.authorId?._id ||
-
-      blog?.authorId
-    );
+  const isOwner = user?.id === (blog?.authorId?._id || blog?.authorId);
 
   // DELETE MUTATION
 
   const {
+    mutate: deleteBlogMutation,
 
-    mutate:
-    deleteBlogMutation,
-
-    isPending:
-    isDeleting,
-
+    isPending: isDeleting,
   } = useMutation({
-
-    mutationFn:
-      deleteBlog,
+    mutationFn: deleteBlog,
 
     onSuccess: async () => {
-
-      toast.success(
-        "Blog deleted"
-      );
+      toast.success("Blog deleted");
 
       // REMOVE SINGLE BLOG CACHE
 
       queryClient.removeQueries({
-
-        queryKey: [
-          "blog",
-          blogId,
-        ],
-
+        queryKey: ["blog", blogId],
       });
 
       // REFRESH BLOG LIST
 
       await queryClient.invalidateQueries({
-
-        queryKey: [
-          "blogs",
-        ],
-
+        queryKey: ["blogs"],
       });
 
       // REDIRECT
 
       router.replace("/");
-
     },
 
     onError: () => {
-
-      toast.error(
-        "Failed to delete blog"
-      );
-
+      toast.error("Failed to delete blog");
     },
-
   });
 
   // DELETE HANDLER
 
-  const handleDelete =
-    () => {
+  const handleDelete = () => {
+    const confirmed = window.confirm("Delete this blog?");
 
-      const confirmed =
-        window.confirm(
+    if (!confirmed) return;
 
-          "Delete this blog?"
-
-        );
-
-      if (!confirmed)
-        return;
-
-      deleteBlogMutation(
-        blog._id
-      );
-
-    };
+    deleteBlogMutation(blog._id);
+  };
 
   // LOADING
 
   if (isLoading) {
-
     return (
-
       <div
         className="
         max-w-5xl
@@ -211,33 +108,24 @@ export default function
         py-10
       "
       >
-
         <BlogCardSkeleton />
-
       </div>
-
     );
-
   }
 
   // ERROR
 
   if (error) {
-
     return (
-
       <ErrorState
         message="
         Failed to load blog
         "
       />
-
     );
-
   }
 
   return (
-
     <div
       className="
       max-w-5xl
@@ -247,7 +135,6 @@ export default function
       py-10
     "
     >
-
       {/* COVER IMAGE */}
 
       <div
@@ -258,17 +145,12 @@ export default function
         border
       "
       >
-
         <img
-
           src={
             blog?.coverImage ||
-
             "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1200&auto=format&fit=crop"
           }
-
           alt={blog?.title}
-
           className="
           w-full
           h-75
@@ -276,7 +158,6 @@ export default function
           object-cover
         "
         />
-
       </div>
 
       {/* BLOG INFO */}
@@ -287,7 +168,6 @@ export default function
         mx-auto
       "
       >
-
         {/* CATEGORY */}
 
         <div
@@ -302,9 +182,7 @@ export default function
           mb-6
         "
         >
-
           {blog?.category}
-
         </div>
 
         {/* TITLE */}
@@ -317,9 +195,7 @@ export default function
           leading-tight
         "
         >
-
           {blog?.title}
-
         </h1>
 
         {/* AUTHOR */}
@@ -336,7 +212,6 @@ export default function
           border-b
         "
         >
-
           {/* LEFT */}
 
           <div
@@ -346,7 +221,6 @@ export default function
             gap-4
           "
           >
-
             {/* AVATAR */}
 
             <div
@@ -363,28 +237,19 @@ export default function
               font-bold
             "
             >
-
-              {blog?.authorName
-                ?.charAt(0)
-                ?.toUpperCase()}
-
+              {blog?.authorName?.charAt(0)?.toUpperCase()}
             </div>
 
             {/* AUTHOR INFO */}
 
             <div>
-
               <p
                 className="
                 font-semibold
                 text-lg
               "
               >
-
-                {
-                  blog?.authorName
-                }
-
+                {blog?.authorName}
               </p>
 
               <p
@@ -393,13 +258,9 @@ export default function
                 text-gray-500
               "
               >
-
                 Blog Author
-
               </p>
-
             </div>
-
           </div>
 
           {/* RIGHT */}
@@ -412,11 +273,9 @@ export default function
             gap-3
           "
           >
-
             {/* ACTIONS */}
 
             {isOwner && (
-
               <div
                 className="
                 flex
@@ -424,7 +283,6 @@ export default function
                 gap-3
               "
               >
-
                 {/* EDIT */}
 
                 <Link
@@ -432,7 +290,6 @@ export default function
                     /edit-blog/${blog._id}
                   `}
                 >
-
                   <button
                     className="
                     px-5
@@ -444,25 +301,15 @@ export default function
                     transition
                   "
                   >
-
                     Edit
-
                   </button>
-
                 </Link>
 
                 {/* DELETE */}
 
                 <button
-
-                  onClick={
-                    handleDelete
-                  }
-
-                  disabled={
-                    isDeleting
-                  }
-
+                  onClick={handleDelete}
+                  disabled={isDeleting}
                   className="
                   px-5
                   py-2
@@ -475,35 +322,19 @@ export default function
                   disabled:opacity-50
                 "
                 >
-
-                  {isDeleting
-
-                    ? "Deleting..."
-
-                    : "Delete"}
-
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </button>
-
               </div>
-
             )}
 
             {/* TAGS */}
 
-            {(Array.isArray(
-              blog?.tags
-            )
-
+            {(Array.isArray(blog?.tags)
               ? blog?.tags
-
               : blog?.tags?.split(",")
-
             )?.map((tag) => (
-
               <span
-
                 key={tag}
-
                 className="
                 px-3
                 py-1
@@ -513,15 +344,10 @@ export default function
                 text-xs
               "
               >
-
                 #{tag.trim()}
-
               </span>
-
             ))}
-
           </div>
-
         </div>
 
         {/* CONTENT */}
@@ -535,11 +361,8 @@ export default function
           whitespace-pre-wrap
         "
         >
-
           {blog?.content}
-
         </div>
-
       </div>
 
       {/* COMMENTS */}
@@ -551,15 +374,8 @@ export default function
         mt-20
       "
       >
-
-        <CommentSection
-          blogId={blog._id}
-        />
-
+        <CommentSection blogId={blog._id} />
       </div>
-
     </div>
-
   );
-
 }

@@ -1,38 +1,24 @@
 "use client";
 
-import dynamic
-from "next/dynamic";
+import dynamic from "next/dynamic";
 
-import
-"react-quill-new/dist/quill.snow.css";
+import "react-quill-new/dist/quill.snow.css";
 
-const ReactQuill =
-  dynamic(
+const ReactQuill = dynamic(
+  () => import("react-quill-new"),
 
-    () =>
-      import(
-        "react-quill-new"
-      ),
+  {
+    ssr: false,
+  },
+);
 
-    {
-      ssr: false,
-    }
-
-  );
-
-export default function
-RichTextEditor({
-
+export default function RichTextEditor({
   value,
 
   setValue,
-
 }) {
-
   const modules = {
-
     toolbar: [
-
       [{ header: [1, 2, 3, false] }],
 
       ["bold", "italic", "underline"],
@@ -44,13 +30,10 @@ RichTextEditor({
       ["link"],
 
       ["clean"],
-
     ],
-
   };
 
   return (
-
     <div
       className="
       bg-white
@@ -59,25 +42,15 @@ RichTextEditor({
       border
     "
     >
-
       <ReactQuill
-
         theme="snow"
-
         value={value}
-
         onChange={setValue}
-
         modules={modules}
-
         placeholder="
         Write your blog content...
         "
-
       />
-
     </div>
-
   );
-
 }

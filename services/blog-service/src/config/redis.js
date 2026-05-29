@@ -2,52 +2,26 @@ import redis from "redis";
 
 let redisClient;
 
-const connectRedis =
-  async () => {
+const connectRedis = async () => {
+  try {
+    redisClient = redis.createClient({
+      url: process.env.REDIS_URL,
+    });
 
-    try {
+    redisClient.on("error", (err) => {
+      console.log("Redis Error:", err.message);
+    });
 
-      redisClient =
-        redis.createClient({
+    await redisClient.connect();
 
-          url:
-            process.env.REDIS_URL,
+    console.log("Redis Connected");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
-        });
-
-      redisClient.on(
-        "error",
-        (err) => {
-
-          console.log(
-            "Redis Error:",
-            err.message
-          );
-
-        }
-      );
-
-      await redisClient.connect();
-
-      console.log(
-        "Redis Connected"
-      );
-
-    } catch (error) {
-
-      console.log(
-        error.message
-      );
-
-    }
-
-  };
-
-export const getRedisClient =
-  () => {
-
-    return redisClient;
-
-  };
+export const getRedisClient = () => {
+  return redisClient;
+};
 
 export default connectRedis;

@@ -1,54 +1,31 @@
-import {
-  getChannel,
-} from "./connection.js";
+import { getChannel } from "./connection.js";
 
-const publishEvent = async (
-  exchange,
-  routingKey,
-  message
-) => {
-
+const publishEvent = async (exchange, routingKey, message) => {
   try {
-
-    const channel =
-      getChannel();
+    const channel = getChannel();
 
     await channel.assertExchange(
-
       exchange,
 
       "topic",
 
       {
         durable: true,
-      }
-
+      },
     );
 
     channel.publish(
-
       exchange,
 
       routingKey,
 
-      Buffer.from(
-        JSON.stringify(message)
-      )
-
+      Buffer.from(JSON.stringify(message)),
     );
 
-    console.log(
-      `Event Published: ${routingKey}`
-    );
-
+    console.log(`Event Published: ${routingKey}`);
   } catch (error) {
-
-    console.log(
-      error.message
-    );
-
+    console.log(error.message);
   }
-
 };
 
 export default publishEvent;

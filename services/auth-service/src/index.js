@@ -4,8 +4,7 @@ import cors from "cors";
 
 import dotenv from "dotenv";
 
-import authRoutes from
-"./routes/auth.routes.js";
+import authRoutes from "./routes/auth.routes.js";
 
 dotenv.config();
 
@@ -16,26 +15,14 @@ app.use(cors());
 // IMPORTANT
 app.use(express.json());
 
-app.use(
-  "/api/auth",
-  authRoutes
-);
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
-
-  res.send(
-    "Auth Service Running"
-  );
-
+  res.send("Auth Service Running");
 });
 
-const PORT =
-  process.env.PORT || 8001;
+const PORT = process.env.PORT || 8001;
 
 app.listen(PORT, () => {
-
-  console.log(
-    `Auth Service running on ${PORT}`
-  );
-
+  console.log(`Auth Service running on ${PORT}`);
 });

@@ -4,20 +4,13 @@ import cors from "cors";
 
 import dotenv from "dotenv";
 
-import connectDB from
-"./config/db.js";
+import connectDB from "./config/db.js";
 
-import connectRedis from
-"./config/redis.js";
+import connectRedis from "./config/redis.js";
 
-import connectRabbitMQ,
-{
-  getChannel,
-} from
-"./rabbitmq/connection.js";
+import connectRabbitMQ, { getChannel } from "./rabbitmq/connection.js";
 
-import blogRoutes from
-"./routes/blog.routes.js";
+import blogRoutes from "./routes/blog.routes.js";
 
 dotenv.config();
 
@@ -27,62 +20,34 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use(
-  "/api/blogs",
-  blogRoutes
-);
+app.use("/api/blogs", blogRoutes);
 
 app.get("/", (req, res) => {
-
-  res.send(
-    "Blog Service Running"
-  );
-
+  res.send("Blog Service Running");
 });
 
-const waitForRabbitMQ =
-  async () => {
+const waitForRabbitMQ = async () => {
+  while (!getChannel()) {
+    console.log("Waiting for RabbitMQ...");
 
-    while (!getChannel()) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+};
 
-      console.log(
-        "Waiting for RabbitMQ..."
-      );
+const startServer = async () => {
+  await connectDB();
 
-      await new Promise(
-        (resolve) =>
-          setTimeout(
-            resolve,
-            2000
-          )
-      );
+  await connectRedis();
 
-    }
+  connectRabbitMQ();
 
-  };
+  await waitForRabbitMQ();
 
-const startServer =
-  async () => {
+  const PORT = process.env.PORT || 8002;
 
-    await connectDB();
-
-    await connectRedis();
-
-    connectRabbitMQ();
-
-    await waitForRabbitMQ();
-
-    const PORT =
-      process.env.PORT || 8002;
-
-    app.listen(PORT, () => {
-
-      console.log(
-        `Blog Service running on ${PORT}`
-      );
-
-    });
-
-  };
+  app.listen(PORT, () => {
+    console.log(`Blog Service running on ${PORT}`);
+  });
+};
 
 startServer();

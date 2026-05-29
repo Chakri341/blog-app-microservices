@@ -1,102 +1,55 @@
 "use client";
 
-import { useState }
-from "react";
+import { useState } from "react";
 
-import notificationStore
-from "../store/notification.store";
+import notificationStore from "../store/notification.store";
 
-import {
-  useMutation,
-} from
-"@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
-import {
-  markNotificationRead,
-} from
-"../services/notification.service";
+import { markNotificationRead } from "../services/notification.service";
 
-export default function
-NotificationBell() {
+export default function NotificationBell() {
+  const [open, setOpen] = useState(false);
 
-  const [
+  const notifications = notificationStore((state) => state.notifications);
 
-    open,
+  const unreadCount = notificationStore((state) => state.unreadCount);
 
-    setOpen,
-
-  ] = useState(false);
-
-  const notifications =
-    notificationStore(
-      (state) =>
-        state.notifications
-    );
-
-  const unreadCount =
-    notificationStore(
-      (state) =>
-        state.unreadCount
-    );
-
-  const markAsRead =
-    notificationStore(
-      (state) =>
-        state.markAsRead
-    );
+  const markAsRead = notificationStore((state) => state.markAsRead);
 
   // MUTATION
 
-  const mutation =
-    useMutation({
-
-      mutationFn:
-        markNotificationRead,
-
-    });
+  const mutation = useMutation({
+    mutationFn: markNotificationRead,
+  });
 
   // CLICK HANDLER
 
-  const handleRead =
-    (notification) => {
+  const handleRead = (notification) => {
+    if (notification.read) {
+      return;
+    }
 
-      if (
-        notification.read
-      ) {
-        return;
-      }
+    // UI UPDATE FIRST
 
-      // UI UPDATE FIRST
+    markAsRead(notification._id);
 
-      markAsRead(
-        notification._id
-      );
+    // BACKEND UPDATE
 
-      // BACKEND UPDATE
-
-      mutation.mutate(
-        notification._id
-      );
-
-    };
+    mutation.mutate(notification._id);
+  };
 
   return (
-
     <div
       className="
       relative
       z-50
     "
     >
-
       {/* BELL */}
 
       <button
-
-        onClick={() =>
-          setOpen(!open)
-        }
-
+        onClick={() => setOpen(!open)}
         className="
         relative
         w-12
@@ -111,13 +64,9 @@ NotificationBell() {
         shadow-lg
       "
       >
-
         🔔
-
         {/* COUNT */}
-
         {unreadCount > 0 && (
-
           <span
             className="
             absolute
@@ -134,19 +83,14 @@ NotificationBell() {
             justify-center
           "
           >
-
             {unreadCount}
-
           </span>
-
         )}
-
       </button>
 
       {/* DROPDOWN */}
 
       {open && (
-
         <div
           className="
           absolute
@@ -160,7 +104,6 @@ NotificationBell() {
           overflow-hidden
         "
         >
-
           {/* HEADER */}
 
           <div
@@ -173,19 +116,15 @@ NotificationBell() {
             justify-between
           "
           >
-
             <h2
               className="
               font-semibold
             "
             >
-
               Notifications
-
             </h2>
 
             {unreadCount > 0 && (
-
               <span
                 className="
                 text-xs
@@ -196,13 +135,9 @@ NotificationBell() {
                 rounded-full
               "
               >
-
                 {unreadCount}
-
               </span>
-
             )}
-
           </div>
 
           {/* LIST */}
@@ -213,9 +148,7 @@ NotificationBell() {
             overflow-y-auto
           "
           >
-
             {notifications.length === 0 ? (
-
               <p
                 className="
                 p-5
@@ -223,59 +156,35 @@ NotificationBell() {
                 text-gray-500
               "
               >
-
                 No notifications
-
               </p>
-
             ) : (
-
-              notifications.map(
-                (notification) => (
-
-                  <div
-
-                    key={
-                      notification._id
-                    }
-
-                    onClick={() =>
-                      handleRead(
-                        notification
-                      )
-                    }
-
-                    className={`
+              notifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  onClick={() => handleRead(notification)}
+                  className={`
                       px-5
                       py-4
                       border-b
                       cursor-pointer
                       transition
 
-                      ${
-                        notification.read
-
-                          ? "bg-white"
-
-                          : "bg-blue-50"
-                      }
+                      ${notification.read ? "bg-white" : "bg-blue-50"}
                     `}
-                  >
-
-                    <div
-                      className="
+                >
+                  <div
+                    className="
                       flex
                       items-start
                       gap-3
                     "
-                    >
+                  >
+                    {/* BLUE DOT */}
 
-                      {/* BLUE DOT */}
-
-                      {!notification.read && (
-
-                        <div
-                          className="
+                    {!notification.read && (
+                      <div
+                        className="
                           w-2
                           h-2
                           rounded-full
@@ -283,43 +192,27 @@ NotificationBell() {
                           mt-2
                           shrink-0
                         "
-                        />
+                      />
+                    )}
 
-                      )}
+                    {/* MESSAGE */}
 
-                      {/* MESSAGE */}
-
-                      <p
-                        className="
+                    <p
+                      className="
                         text-sm
                         leading-6
                         text-gray-800
                       "
-                      >
-
-                        {
-                          notification.message
-                        }
-
-                      </p>
-
-                    </div>
-
+                    >
+                      {notification.message}
+                    </p>
                   </div>
-
-                )
-              )
-
+                </div>
+              ))
             )}
-
           </div>
-
         </div>
-
       )}
-
     </div>
-
   );
-
 }

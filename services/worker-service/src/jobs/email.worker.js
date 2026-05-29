@@ -1,76 +1,41 @@
-import { Worker }
-from "bullmq";
+import { Worker } from "bullmq";
 
-import connection from
-"./redis.connection.js";
+import connection from "./redis.connection.js";
 
-const emailWorker =
-  new Worker(
+const emailWorker = new Worker(
+  "emailQueue",
 
-    "emailQueue",
+  async (job) => {
+    console.log("Processing Email Job...");
 
-    async (job) => {
+    console.log(job.data);
 
-      console.log(
-        "Processing Email Job..."
-      );
+    // SIMULATE EMAIL SENDING
 
-      console.log(
-        job.data
-      );
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // SIMULATE EMAIL SENDING
+    console.log("Email Sent Successfully");
+  },
 
-      await new Promise(
-        (resolve) =>
-          setTimeout(
-            resolve,
-            3000
-          )
-      );
-
-      console.log(
-        "Email Sent Successfully"
-      );
-
-    },
-
-    {
-      connection,
-    }
-
-  );
-
-emailWorker.on(
-
-  "completed",
-
-  (job) => {
-
-    console.log(
-
-      `Job ${job.id} completed`
-
-    );
-
-  }
-
+  {
+    connection,
+  },
 );
 
 emailWorker.on(
+  "completed",
 
+  (job) => {
+    console.log(`Job ${job.id} completed`);
+  },
+);
+
+emailWorker.on(
   "failed",
 
   (job, err) => {
-
-    console.log(
-
-      `Job ${job.id} failed`
-
-    );
+    console.log(`Job ${job.id} failed`);
 
     console.log(err);
-
-  }
-
+  },
 );

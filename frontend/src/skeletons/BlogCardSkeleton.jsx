@@ -1,8 +1,5 @@
-export default function
-BlogCardSkeleton() {
-
+export default function BlogCardSkeleton() {
   return (
-
     <div
       className="
       animate-pulse
@@ -12,7 +9,6 @@ BlogCardSkeleton() {
       bg-white
     "
     >
-
       {/* IMAGE */}
 
       <div
@@ -30,7 +26,6 @@ BlogCardSkeleton() {
         space-y-4
       "
       >
-
         <div
           className="
           h-6
@@ -65,7 +60,6 @@ BlogCardSkeleton() {
           pt-2
         "
         >
-
           <div
             className="
             h-8
@@ -83,13 +77,8 @@ BlogCardSkeleton() {
             bg-gray-200
           "
           />
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 }

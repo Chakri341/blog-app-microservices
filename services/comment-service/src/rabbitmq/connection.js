@@ -2,41 +2,21 @@ import amqp from "amqplib";
 
 let channel;
 
-const connectRabbitMQ =
-  async () => {
+const connectRabbitMQ = async () => {
+  try {
+    const connection = await amqp.connect(process.env.RABBITMQ_URL);
 
-    try {
+    channel = await connection.createChannel();
 
-      const connection =
-        await amqp.connect(
-          process.env.RABBITMQ_URL
-        );
+    console.log("RabbitMQ Connected");
+  } catch (error) {
+    console.log("RabbitMQ Connection Failed");
 
-      channel =
-        await connection.createChannel();
+    console.log("Retrying in 5 seconds...");
 
-      console.log(
-        "RabbitMQ Connected"
-      );
-
-    } catch (error) {
-
-      console.log(
-        "RabbitMQ Connection Failed"
-      );
-
-      console.log(
-        "Retrying in 5 seconds..."
-      );
-
-      setTimeout(
-        connectRabbitMQ,
-        5000
-      );
-
-    }
-
-  };
+    setTimeout(connectRabbitMQ, 5000);
+  }
+};
 
 export const getChannel = () => {
   return channel;

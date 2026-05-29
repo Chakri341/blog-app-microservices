@@ -1,78 +1,45 @@
 "use client";
 
-import {
-  useQuery,
-} from
-"@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import authStore
-from "@/store/auth.store";
+import authStore from "@/store/auth.store";
 
-import {
-  getBlogs,
-} from "@/services/blog.service";
+import { getBlogs } from "@/services/blog.service";
 
-import BlogCard
-from "@/components/BlogCard";
+import BlogCard from "@/components/BlogCard";
 
-import BlogCardSkeleton
-from "@/skeletons/BlogCardSkeleton";
+import BlogCardSkeleton from "@/skeletons/BlogCardSkeleton";
 
-import EmptyState
-from "@/components/ui/EmptyState";
+import EmptyState from "@/components/ui/EmptyState";
 
-export default function
-ProfilePage() {
-
+export default function ProfilePage() {
   // USER
 
-  const user =
-    authStore(
-      (state) =>
-        state.user
-    );
+  const user = authStore((state) => state.user);
 
   // FETCH BLOGS
 
   const {
-
     data,
 
     isLoading,
-
   } = useQuery({
+    queryKey: ["blogs"],
 
-    queryKey: [
-      "blogs",
-    ],
-
-    queryFn:
-      getBlogs,
-
+    queryFn: getBlogs,
   });
 
   // FILTER USER BLOGS
 
   const myBlogs =
-
     data?.blogs?.filter(
-
-      (blog) =>
-
-        (
-          blog.authorId?._id ||
-
-          blog.authorId
-        ) === user?.id
-
+      (blog) => (blog.authorId?._id || blog.authorId) === user?.id,
     ) || [];
 
   // LOADING
 
   if (isLoading) {
-
     return (
-
       <div
         className="
         max-w-7xl
@@ -85,25 +52,16 @@ ProfilePage() {
         gap-6
       "
       >
-
         {Array.from({
           length: 3,
         }).map((_, index) => (
-
-          <BlogCardSkeleton
-            key={index}
-          />
-
+          <BlogCardSkeleton key={index} />
         ))}
-
       </div>
-
     );
-
   }
 
   return (
-
     <div
       className="
       max-w-7xl
@@ -112,7 +70,6 @@ ProfilePage() {
       py-10
     "
     >
-
       {/* PROFILE HEADER */}
 
       <div
@@ -124,7 +81,6 @@ ProfilePage() {
         bg-white
       "
       >
-
         {/* TOP */}
 
         <div
@@ -135,7 +91,6 @@ ProfilePage() {
           flex-wrap
         "
         >
-
           {/* AVATAR */}
 
           <div
@@ -152,26 +107,19 @@ ProfilePage() {
             font-bold
           "
           >
-
-            {user?.name
-              ?.charAt(0)
-              ?.toUpperCase()}
-
+            {user?.name?.charAt(0)?.toUpperCase()}
           </div>
 
           {/* INFO */}
 
           <div>
-
             <h1
               className="
               text-4xl
               font-black
             "
             >
-
               {user?.name}
-
             </h1>
 
             <p
@@ -180,13 +128,9 @@ ProfilePage() {
               text-gray-500
             "
             >
-
               {user?.email}
-
             </p>
-
           </div>
-
         </div>
 
         {/* STATS */}
@@ -199,18 +143,14 @@ ProfilePage() {
           flex-wrap
         "
         >
-
           <div>
-
             <p
               className="
               text-3xl
               font-black
             "
             >
-
               {myBlogs.length}
-
             </p>
 
             <p
@@ -218,21 +158,15 @@ ProfilePage() {
               text-gray-500
             "
             >
-
               Blogs
-
             </p>
-
           </div>
-
         </div>
-
       </div>
 
       {/* MY BLOGS */}
 
       <div>
-
         <div
           className="
           flex
@@ -243,46 +177,34 @@ ProfilePage() {
           gap-4
         "
         >
-
           <h2
             className="
             text-3xl
             font-black
           "
           >
-
             My Blogs
-
           </h2>
-
         </div>
 
         {/* EMPTY */}
 
         {myBlogs.length === 0 ? (
-
           <EmptyState
-
             title="
             No Blogs Yet
             "
-
             description="
             Start creating your first blog.
             "
-
             buttonText="
             Create Blog
             "
-
             buttonLink="
             /create-blog
             "
-
           />
-
         ) : (
-
           <div
             className="
             grid
@@ -292,29 +214,12 @@ ProfilePage() {
             gap-6
           "
           >
-
-            {myBlogs.map(
-              (blog) => (
-
-                <BlogCard
-
-                  key={blog._id}
-
-                  blog={blog}
-
-                />
-
-              )
-            )}
-
+            {myBlogs.map((blog) => (
+              <BlogCard key={blog._id} blog={blog} />
+            ))}
           </div>
-
         )}
-
       </div>
-
     </div>
-
   );
-
 }

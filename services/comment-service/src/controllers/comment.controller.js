@@ -1,178 +1,103 @@
-import Comment from
-"../models/comment.model.js";
+import Comment from "../models/comment.model.js";
 
-import publishEvent from
-"../rabbitmq/publisher.js";
+import publishEvent from "../rabbitmq/publisher.js";
 
-export const addComment =
-  async (req, res) => {
+export const addComment = async (req, res) => {
+  try {
+    const { blogId, content, parentComment } = req.body;
 
-    try {
+    const comment = await Comment.create({
+      blogId,
 
-      const {
-        blogId,
-        content,
-        parentComment,
-      } = req.body;
+      content,
 
-      const comment =
-        await Comment.create({
+      parentComment: parentComment || null,
 
-          blogId,
+      userId: req.user.id,
+    });
 
-          content,
+    await publishEvent(
+      "comment_exchange",
 
-          parentComment:
-            parentComment || null,
+      "comment.created",
 
-          userId:
-            req.user.id,
+      {
+        commentId: comment._id,
 
-        });
+        blogId: comment.blogId,
 
-      await publishEvent(
+        userId: comment.userId,
+      },
+    );
 
-        "comment_exchange",
+    res.status(201).json({
+      success: true,
 
-        "comment.created",
+      comment,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-        {
-          commentId:
-            comment._id,
+      message: error.message,
+    });
+  }
+};
 
-          blogId:
-            comment.blogId,
+export const getBlogComments = async (req, res) => {
+  try {
+    const comments = await Comment.find({
+      blogId: req.params.blogId,
+    }).sort({
+      createdAt: -1,
+    });
 
-          userId:
-            comment.userId,
-        }
+    res.json({
+      success: true,
 
-      );
+      comments,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-      res.status(201).json({
+      message: error.message,
+    });
+  }
+};
 
-        success: true,
+export const deleteComment = async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.id);
 
-        comment,
-
-      });
-
-    } catch (error) {
-
-      res.status(500).json({
-
+    if (!comment) {
+      return res.status(404).json({
         success: false,
 
-        message:
-          error.message,
-
+        message: "Comment not found",
       });
-
     }
 
-  };
-
-export const getBlogComments =
-  async (req, res) => {
-
-    try {
-
-      const comments =
-        await Comment.find({
-
-          blogId:
-            req.params.blogId,
-
-        }).sort({
-          createdAt: -1,
-        });
-
-      res.json({
-
-        success: true,
-
-        comments,
-
-      });
-
-    } catch (error) {
-
-      res.status(500).json({
-
+    if (comment.userId !== req.user.id) {
+      return res.status(403).json({
         success: false,
 
-        message:
-          error.message,
-
+        message: "Unauthorized",
       });
-
     }
 
-  };
+    await Comment.findByIdAndDelete(req.params.id);
 
-export const deleteComment =
-  async (req, res) => {
+    res.json({
+      success: true,
 
-    try {
+      message: "Comment deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-      const comment =
-        await Comment.findById(
-          req.params.id
-        );
-
-      if (!comment) {
-
-        return res.status(404).json({
-
-          success: false,
-
-          message:
-            "Comment not found",
-
-        });
-
-      }
-
-      if (
-        comment.userId !==
-        req.user.id
-      ) {
-
-        return res.status(403).json({
-
-          success: false,
-
-          message:
-            "Unauthorized",
-
-        });
-
-      }
-
-      await Comment.findByIdAndDelete(
-        req.params.id
-      );
-
-      res.json({
-
-        success: true,
-
-        message:
-          "Comment deleted",
-
-      });
-
-    } catch (error) {
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-          error.message,
-
-      });
-
-    }
-
-  };
+      message: error.message,
+    });
+  }
+};

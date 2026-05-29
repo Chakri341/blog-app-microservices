@@ -4,6 +4,4 @@ import "./jobs/email.worker.js";
 
 dotenv.config();
 
-console.log(
-  "Worker Service Running"
-);
+console.log("Worker Service Running");

@@ -1,608 +1,397 @@
-import Blog from
-  "../models/blog.model.js";
+import Blog from "../models/blog.model.js";
 
-import publishEvent from
-  "../rabbitmq/publisher.js";
+import publishEvent from "../rabbitmq/publisher.js";
 
-import {
-  getRedisClient,
-} from
-  "../config/redis.js";
+import { getRedisClient } from "../config/redis.js";
 
-import cloudinary from
-  "../config/cloudinary.js";
+import cloudinary from "../config/cloudinary.js";
 
 import emailQueue from "../jobs/email.queue.js";
 
-export const createBlog =
-  async (req, res) => {
+export const createBlog = async (req, res) => {
+  try {
+    console.log(req.file);
 
-    try {
+    const { title, content, category, tags, status } = req.body;
 
-      console.log(req.file);
+    let coverImage = "";
 
-      const {
-        title,
-        content,
-        category,
-        tags,
-        status,
-      } = req.body;
+    // UPLOAD TO CLOUDINARY
 
-      let coverImage = "";
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "blog-platform",
+      });
 
-      // UPLOAD TO CLOUDINARY
+      coverImage = result.secure_url;
+    }
 
-      if (req.file) {
+    const blog = await Blog.create({
+      title,
 
-        const result =
-          await cloudinary.uploader.upload(
-            req.file.path,
-            {
-              folder:
-                "blog-platform",
-            }
-          );
+      content,
 
-        coverImage =
-          result.secure_url;
+      coverImage,
 
-      }
+      category,
 
-      const blog =
-        await Blog.create({
+      tags,
 
-          title,
+      status,
 
-          content,
+      authorId: req.user.id,
+    });
 
-          coverImage,
+    const redisClient = getRedisClient();
 
-          category,
+    await redisClient.del("all_blogs");
 
-          tags,
+    await publishEvent(
+      "blog_exchange",
 
-          status,
+      "blog.created",
 
-          authorId:
-            req.user.id,
+      {
+        blogId: blog._id,
 
-        });
+        title: blog.title,
 
-      const redisClient =
-        getRedisClient();
+        authorId: blog.authorId,
+      },
+    );
 
-      await redisClient.del(
-        "all_blogs"
-      );
+    await emailQueue.add(
+      "send-blog-email",
 
-      await publishEvent(
+      {
+        email: "admin@blog.com",
 
-        "blog_exchange",
+        blogTitle: blog.title,
+      },
 
-        "blog.created",
+      {
+        attempts: 3,
 
-        {
-          blogId: blog._id,
-
-          title: blog.title,
-
-          authorId:
-            blog.authorId,
-        }
-
-      );
-
-      await emailQueue.add(
-
-        "send-blog-email",
-
-        {
-
-          email:
-            "admin@blog.com",
-
-          blogTitle:
-            blog.title,
-
+        backoff: {
+          type: "exponential",
+          delay: 3000,
         },
+      },
+    );
 
-        {
+    res.status(201).json({
+      success: true,
 
-          attempts: 3,
+      blog,
+    });
+  } catch (error) {
+    console.log(error);
 
-          backoff: {
-            type: "exponential",
-            delay: 3000,
-          },
+    res.status(500).json({
+      success: false,
 
-        }
+      message: error.message,
+    });
+  }
+};
 
-      );
+export const getBlogs = async (req, res) => {
+  try {
+    const redisClient = getRedisClient();
 
-      res.status(201).json({
+    // QUERY PARAMS
 
-        success: true,
+    const {
+      q,
+      category,
+      status,
+      page = 1,
+      limit = 10,
+      sort = "latest",
+    } = req.query;
 
-        blog,
+    // CACHE KEY
 
-      });
+    const cacheKey = `blogs:${JSON.stringify(req.query)}`;
 
-    } catch (error) {
+    // CHECK CACHE
 
-      console.log(error);
+    const cachedBlogs = await redisClient.get(cacheKey);
 
-      res.status(500).json({
+    if (cachedBlogs) {
+      console.log("Fetching blogs from Redis");
 
-        success: false,
-
-        message:
-          error.message,
-
-      });
-
+      return res.json(JSON.parse(cachedBlogs));
     }
 
-  };
+    console.log("Fetching blogs from MongoDB");
 
-export const getBlogs =
-  async (req, res) => {
+    // FILTER OBJECT
 
-    try {
+    const filters = {};
 
-      const redisClient =
-        getRedisClient();
+    // SEARCH
 
-      // QUERY PARAMS
-
-      const {
-        q,
-        category,
-        status,
-        page = 1,
-        limit = 10,
-        sort = "latest",
-      } = req.query;
-
-      // CACHE KEY
-
-      const cacheKey =
-        `blogs:${JSON.stringify(req.query)}`;
-
-      // CHECK CACHE
-
-      const cachedBlogs =
-        await redisClient.get(
-          cacheKey
-        );
-
-      if (cachedBlogs) {
-
-        console.log(
-          "Fetching blogs from Redis"
-        );
-
-        return res.json(
-          JSON.parse(cachedBlogs)
-        );
-
-      }
-
-      console.log(
-        "Fetching blogs from MongoDB"
-      );
-
-      // FILTER OBJECT
-
-      const filters = {};
-
-      // SEARCH
-
-      if (q) {
-
-        filters.$text = {
-          $search: q,
-        };
-
-      }
-
-      // CATEGORY
-
-      if (category) {
-
-        filters.category =
-          category;
-
-      }
-
-      // STATUS
-
-      if (status) {
-
-        filters.status =
-          status;
-
-      }
-
-      // SORTING
-
-      let sortOption = {
-        createdAt: -1,
+    if (q) {
+      filters.$text = {
+        $search: q,
       };
+    }
 
-      if (sort === "oldest") {
+    // CATEGORY
 
-        sortOption = {
-          createdAt: 1,
-        };
+    if (category) {
+      filters.category = category;
+    }
 
-      }
+    // STATUS
 
-      // PAGINATION
+    if (status) {
+      filters.status = status;
+    }
 
-      const skip =
-        (page - 1) * limit;
+    // SORTING
 
-      // DATABASE QUERY
+    let sortOption = {
+      createdAt: -1,
+    };
 
-      const blogs =
-        await Blog.find(filters)
-
-          .sort(sortOption)
-
-          .skip(skip)
-
-          .limit(Number(limit));
-
-      // TOTAL COUNT
-
-      const total =
-        await Blog.countDocuments(
-          filters
-        );
-
-      const response = {
-
-        success: true,
-
-        total,
-
-        currentPage:
-          Number(page),
-
-        totalPages:
-          Math.ceil(
-            total / limit
-          ),
-
-        blogs,
-
+    if (sort === "oldest") {
+      sortOption = {
+        createdAt: 1,
       };
-
-      // STORE CACHE
-
-      await redisClient.set(
-
-        cacheKey,
-
-        JSON.stringify(response),
-
-        {
-          EX: 60,
-        }
-
-      );
-
-      res.json(response);
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-          error.message,
-
-      });
-
     }
 
-  };
+    // PAGINATION
 
-export const getSingleBlog =
-  async (req, res) => {
+    const skip = (page - 1) * limit;
 
-    try {
+    // DATABASE QUERY
 
-      const redisClient =
-        getRedisClient();
+    const blogs = await Blog.find(filters)
 
-      const cacheKey =
-        `blog_${req.params.id}`;
+      .sort(sortOption)
 
-      const cachedBlog =
-        await redisClient.get(
-          cacheKey
-        );
+      .skip(skip)
 
-      // CACHE HIT
+      .limit(Number(limit));
 
-      if (cachedBlog) {
+    // TOTAL COUNT
 
-        console.log(
-          "Fetching single blog from Redis"
-        );
+    const total = await Blog.countDocuments(filters);
 
-        return res.json({
+    const response = {
+      success: true,
 
-          success: true,
+      total,
 
-          blog:
-            JSON.parse(
-              cachedBlog
-            ),
+      currentPage: Number(page),
 
-        });
+      totalPages: Math.ceil(total / limit),
 
-      }
+      blogs,
+    };
 
-      // CACHE MISS
+    // STORE CACHE
 
-      console.log(
-        "Fetching single blog from MongoDB"
-      );
+    await redisClient.set(
+      cacheKey,
 
-      const blog =
-        await Blog.findById(
-          req.params.id
-        );
+      JSON.stringify(response),
 
-      if (!blog) {
+      {
+        EX: 60,
+      },
+    );
 
-        return res.status(404).json({
+    res.json(response);
+  } catch (error) {
+    console.log(error);
 
-          success: false,
+    res.status(500).json({
+      success: false,
 
-          message:
-            "Blog not found",
+      message: error.message,
+    });
+  }
+};
 
-        });
+export const getSingleBlog = async (req, res) => {
+  try {
+    const redisClient = getRedisClient();
 
-      }
+    const cacheKey = `blog_${req.params.id}`;
 
-      await redisClient.set(
+    const cachedBlog = await redisClient.get(cacheKey);
 
-        cacheKey,
+    // CACHE HIT
 
-        JSON.stringify(blog),
+    if (cachedBlog) {
+      console.log("Fetching single blog from Redis");
 
-        {
-          EX: 60,
-        }
-
-      );
-
-      res.json({
-
+      return res.json({
         success: true,
 
-        blog,
-
+        blog: JSON.parse(cachedBlog),
       });
-
-    } catch (error) {
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-          error.message,
-
-      });
-
     }
 
-  };
+    // CACHE MISS
 
-export const
-updateBlog =
-  async (req, res) => {
+    console.log("Fetching single blog from MongoDB");
 
-    try {
+    const blog = await Blog.findById(req.params.id);
 
-      const {
-
-        title,
-
-        content,
-
-        category,
-
-        tags,
-
-      } = req.body;
-
-      // UPDATE DATA
-
-      const updatedData = {
-
-        title,
-
-        content,
-
-        category,
-
-        tags,
-
-      };
-
-      // IMAGE
-
-      if (req.file) {
-
-        updatedData.coverImage =
-
-          req.file.path;
-
-      }
-
-      // UPDATE BLOG
-
-      const updatedBlog =
-
-        await Blog.findByIdAndUpdate(
-
-          req.params.id,
-
-          updatedData,
-
-          {
-
-            new: true,
-
-          }
-
-        );
-
-      res.status(200).json({
-
-        success: true,
-
-        blog: updatedBlog,
-
-      });
-
-    } catch (error) {
-
-      res.status(500).json({
-
+    if (!blog) {
+      return res.status(404).json({
         success: false,
 
-        message:
-          error.message,
-
+        message: "Blog not found",
       });
-
     }
 
-  };
+    await redisClient.set(
+      cacheKey,
 
-export const deleteBlog =
-  async (req, res) => {
+      JSON.stringify(blog),
 
-    try {
+      {
+        EX: 60,
+      },
+    );
 
-      const blog =
-        await Blog.findById(
-          req.params.id
-        );
+    res.json({
+      success: true,
 
-      if (!blog) {
+      blog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-        return res.status(404).json({
+      message: error.message,
+    });
+  }
+};
 
-          success: false,
+export const updateBlog = async (req, res) => {
+  try {
+    const {
+      title,
 
-          message:
-            "Blog not found",
+      content,
 
-        });
+      category,
 
-      }
+      tags,
+    } = req.body;
 
-      if (
-        blog.authorId !==
-        req.user.id
-      ) {
+    // UPDATE DATA
 
-        return res.status(403).json({
+    const updatedData = {
+      title,
 
-          success: false,
+      content,
 
-          message:
-            "Unauthorized",
+      category,
 
-        });
+      tags,
+    };
 
-      }
+    // IMAGE
 
-      await Blog.findByIdAndDelete(
-        req.params.id
-      );
+    if (req.file) {
+      updatedData.coverImage = req.file.path;
+    }
 
-      // CLEAR CACHE
+    // UPDATE BLOG
 
-      const redisClient =
-        getRedisClient();
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      req.params.id,
 
-      await redisClient.del(
-        "all_blogs"
-      );
+      updatedData,
 
-      await redisClient.del(
-        `blog_${req.params.id}`
-      );
+      {
+        new: true,
+      },
+    );
 
-      res.json({
+    res.status(200).json({
+      success: true,
 
-        success: true,
+      blog: updatedBlog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
 
-        message:
-          "Blog deleted",
+      message: error.message,
+    });
+  }
+};
 
-      });
+export const deleteBlog = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
 
-    } catch (error) {
-
-      res.status(500).json({
-
+    if (!blog) {
+      return res.status(404).json({
         success: false,
 
-        message:
-          error.message,
-
+        message: "Blog not found",
       });
-
     }
 
-  };
-
-export const getAllBlogsAdmin =
-  async (req, res) => {
-
-    try {
-
-      const blogs =
-        await Blog.find()
-          .sort({
-            createdAt: -1,
-          });
-
-      res.json({
-
-        success: true,
-
-        blogs,
-
-      });
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-
+    if (blog.authorId !== req.user.id) {
+      return res.status(403).json({
         success: false,
 
-        message:
-          error.message,
-
+        message: "Unauthorized",
       });
-
     }
 
-  };
+    await Blog.findByIdAndDelete(req.params.id);
+
+    // CLEAR CACHE
+
+    const redisClient = getRedisClient();
+
+    await redisClient.del("all_blogs");
+
+    await redisClient.del(`blog_${req.params.id}`);
+
+    res.json({
+      success: true,
+
+      message: "Blog deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};
+
+export const getAllBlogsAdmin = async (req, res) => {
+  try {
+    const blogs = await Blog.find().sort({
+      createdAt: -1,
+    });
+
+    res.json({
+      success: true,
+
+      blogs,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};

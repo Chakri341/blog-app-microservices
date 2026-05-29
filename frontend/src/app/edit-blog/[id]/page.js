@@ -1,319 +1,162 @@
 "use client";
 
-import {
-  use,
-  useEffect,
-  useState,
-} from "react";
+import { use, useEffect, useState } from "react";
 
-import {
-  useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import {
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-  useQuery,
+import toast from "react-hot-toast";
 
-  useMutation,
+import { getSingleBlog, updateBlog } from "@/services/blog.service";
 
-  useQueryClient,
+import RichTextEditor from "@/components/editor/RichTextEditor";
 
-} from
-  "@tanstack/react-query";
-
-import toast
-  from "react-hot-toast";
-
-import {
-
-  getSingleBlog,
-
-  updateBlog,
-
-} from
-  "@/services/blog.service";
-
-import RichTextEditor
-  from "@/components/editor/RichTextEditor";
-
-export default function
-  EditBlogPage({
-
-    params,
-
-  }) {
-
+export default function EditBlogPage({ params }) {
   // PARAMS
 
-  const resolvedParams =
-    use(params);
+  const resolvedParams = use(params);
 
-  const blogId =
-    resolvedParams.id;
+  const blogId = resolvedParams.id;
 
   // ROUTER
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   // FORM STATE
 
-  const [
+  const [title, setTitle] = useState("");
 
-    title,
+  const [content, setContent] = useState("");
 
-    setTitle,
+  const [category, setCategory] = useState("");
 
-  ] = useState("");
+  const [tags, setTags] = useState("");
 
-  const [
-
-    content,
-
-    setContent,
-
-  ] = useState("");
-
-  const [
-
-    category,
-
-    setCategory,
-
-  ] = useState("");
-
-  const [
-
-    tags,
-
-    setTags,
-
-  ] = useState("");
-
-  const [
-
-    coverImage,
-
-    setCoverImage,
-
-  ] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
 
   // FETCH BLOG
 
   const {
-
     data,
 
     isLoading,
 
     error,
-
   } = useQuery({
+    queryKey: ["blog", blogId],
 
-    queryKey: [
-      "blog",
-      blogId,
-    ],
-
-    queryFn: () =>
-      getSingleBlog(
-        blogId
-      ),
-
+    queryFn: () => getSingleBlog(blogId),
   });
 
-  const blog =
-    data?.blog;
+  const blog = data?.blog;
 
   // PREFILL FORM
 
   useEffect(() => {
-
     if (blog) {
+      setTitle(blog.title || "");
 
-      setTitle(
-        blog.title || ""
-      );
+      setContent(blog.content || "");
 
-      setContent(
-        blog.content || ""
-      );
+      setCategory(blog.category || "");
 
-      setCategory(
-        blog.category || ""
-      );
-
-      setTags(
-
-        Array.isArray(
-          blog.tags
-        )
-
-          ? blog.tags.join(",")
-
-          : blog.tags || ""
-
-      );
-
+      setTags(Array.isArray(blog.tags) ? blog.tags.join(",") : blog.tags || "");
     }
-
   }, [blog]);
 
   // UPDATE MUTATION
 
   const {
+    mutate: updateBlogMutation,
 
-    mutate:
-    updateBlogMutation,
-
-    isPending:
-    isUpdating,
-
+    isPending: isUpdating,
   } = useMutation({
-
-    mutationFn:
-      updateBlog,
+    mutationFn: updateBlog,
 
     onSuccess: async () => {
-
-      toast.success(
-        "Blog updated"
-      );
+      toast.success("Blog updated");
 
       // REFRESH BLOG LIST
 
       await queryClient.invalidateQueries({
-
-        queryKey: [
-          "blogs",
-        ],
-
+        queryKey: ["blogs"],
       });
 
       // REMOVE OLD BLOG CACHE
 
       queryClient.removeQueries({
-
-        queryKey: [
-          "blog",
-          blogId,
-        ],
-
+        queryKey: ["blog", blogId],
       });
 
       // REDIRECT TO FRESH BLOG PAGE
 
-      router.replace(
-        `/blogs/${blogId}`
-      );
-
+      router.replace(`/blogs/${blogId}`);
     },
 
     onError: () => {
-
-      toast.error(
-        "Failed to update blog"
-      );
-
+      toast.error("Failed to update blog");
     },
-
   });
 
   // SUBMIT
 
-  const handleSubmit =
-    (e) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-      e.preventDefault();
+    const formData = new FormData();
 
-      const formData =
-        new FormData();
+    formData.append("title", title);
 
-      formData.append(
-        "title",
-        title
-      );
+    formData.append("content", content);
 
-      formData.append(
-        "content",
-        content
-      );
+    formData.append("category", category);
 
-      formData.append(
-        "category",
-        category
-      );
+    formData.append("tags", tags);
 
-      formData.append(
-        "tags",
-        tags
-      );
+    if (coverImage) {
+      formData.append("coverImage", coverImage);
+    }
 
-      if (coverImage) {
+    updateBlogMutation({
+      id: blogId,
 
-        formData.append(
-          "coverImage",
-          coverImage
-        );
-
-      }
-
-      updateBlogMutation({
-
-        id: blogId,
-
-        formData,
-
-      });
-
-    };
+      formData,
+    });
+  };
 
   // LOADING
 
   if (isLoading) {
-
     return (
-
       <div
         className="
         p-10
       "
       >
-
         Loading...
-
       </div>
-
     );
-
   }
 
   // ERROR
 
   if (error) {
-
     return (
-
       <div
         className="
         p-10
         text-red-500
       "
       >
-
         Failed to load blog
-
       </div>
-
     );
-
   }
 
   return (
-
     <div
       className="
       max-w-4xl
@@ -322,7 +165,6 @@ export default function
       py-10
     "
     >
-
       {/* TITLE */}
 
       <h1
@@ -332,28 +174,20 @@ export default function
         mb-10
       "
       >
-
         Edit Blog
-
       </h1>
 
       {/* FORM */}
 
       <form
-
-        onSubmit={
-          handleSubmit
-        }
-
+        onSubmit={handleSubmit}
         className="
         space-y-6
       "
       >
-
         {/* TITLE */}
 
         <div>
-
           <label
             className="
             block
@@ -361,27 +195,16 @@ export default function
             font-medium
           "
           >
-
             Blog Title
-
           </label>
 
           <input
-
             type="text"
-
             value={title}
-
-            onChange={(e) =>
-              setTitle(
-                e.target.value
-              )
-            }
-
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="
             Enter blog title
             "
-
             className="
             w-full
             border
@@ -392,13 +215,11 @@ export default function
             focus:ring-black
           "
           />
-
         </div>
 
         {/* CATEGORY */}
 
         <div>
-
           <label
             className="
             block
@@ -406,27 +227,16 @@ export default function
             font-medium
           "
           >
-
             Category
-
           </label>
 
           <input
-
             type="text"
-
             value={category}
-
-            onChange={(e) =>
-              setCategory(
-                e.target.value
-              )
-            }
-
+            onChange={(e) => setCategory(e.target.value)}
             placeholder="
             Enter category
             "
-
             className="
             w-full
             border
@@ -437,13 +247,11 @@ export default function
             focus:ring-black
           "
           />
-
         </div>
 
         {/* TAGS */}
 
         <div>
-
           <label
             className="
             block
@@ -451,27 +259,16 @@ export default function
             font-medium
           "
           >
-
             Tags
-
           </label>
 
           <input
-
             type="text"
-
             value={tags}
-
-            onChange={(e) =>
-              setTags(
-                e.target.value
-              )
-            }
-
+            onChange={(e) => setTags(e.target.value)}
             placeholder="
             react,nextjs,nodejs
             "
-
             className="
             w-full
             border
@@ -482,13 +279,11 @@ export default function
             focus:ring-black
           "
           />
-
         </div>
 
         {/* IMAGE */}
 
         <div>
-
           <label
             className="
             block
@@ -496,23 +291,15 @@ export default function
             font-medium
           "
           >
-
             Cover Image
-
           </label>
 
           {/* CURRENT IMAGE */}
 
           {blog?.coverImage && (
-
             <img
-
-              src={
-                blog.coverImage
-              }
-
+              src={blog.coverImage}
               alt="cover"
-
               className="
               w-full
               h-64
@@ -522,7 +309,6 @@ export default function
               border
             "
             />
-
           )}
 
           {/* FILE INPUT */}
@@ -542,19 +328,10 @@ export default function
             transition
           "
           >
-
             <input
-
               type="file"
-
               hidden
-
-              onChange={(e) =>
-                setCoverImage(
-                  e.target.files[0]
-                )
-              }
-
+              onChange={(e) => setCoverImage(e.target.files[0])}
             />
 
             <span
@@ -562,23 +339,14 @@ export default function
               text-gray-500
             "
             >
-
-              {coverImage
-
-                ? coverImage.name
-
-                : "Click to upload new image"}
-
+              {coverImage ? coverImage.name : "Click to upload new image"}
             </span>
-
           </label>
-
         </div>
 
         {/* CONTENT */}
 
         <div>
-
           <label
             className="
             block
@@ -586,29 +354,16 @@ export default function
             font-medium
           "
           >
-
             Content
-
           </label>
 
-          <RichTextEditor
-
-            value={content}
-
-            setValue={setContent}
-
-          />
-
+          <RichTextEditor value={content} setValue={setContent} />
         </div>
 
         {/* BUTTON */}
 
         <button
-
-          disabled={
-            isUpdating
-          }
-
+          disabled={isUpdating}
           className="
           px-8
           py-4
@@ -619,19 +374,9 @@ export default function
           disabled:opacity-50
         "
         >
-
-          {isUpdating
-
-            ? "Updating..."
-
-            : "Update Blog"}
-
+          {isUpdating ? "Updating..." : "Update Blog"}
         </button>
-
       </form>
-
     </div>
-
   );
-
 }

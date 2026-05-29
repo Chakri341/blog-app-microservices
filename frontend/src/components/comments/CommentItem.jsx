@@ -2,25 +2,17 @@
 
 import { useState } from "react";
 
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {
-  formatDistanceToNow,
-} from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 
 import authStore from "../../store/auth.store";
 
-import {
-  createComment,
-} from "../../services/blog.service";
+import { createComment } from "../../services/blog.service";
 
 import CommentForm from "./CommentForm";
 
 export default function CommentItem({
-
   comment,
 
   allComments,
@@ -28,105 +20,61 @@ export default function CommentItem({
   blogId,
 
   isReply = false,
-
 }) {
+  const [showReplyBox, setShowReplyBox] = useState(false);
 
-  const [showReplyBox, setShowReplyBox] =
-    useState(false);
+  const [showReplies, setShowReplies] = useState(false);
 
-  const [showReplies, setShowReplies] =
-    useState(false);
+  const token = authStore((state) => state.token);
 
-  const token = authStore(
-    (state) => state.token
-  );
+  const queryClient = useQueryClient();
 
-  const queryClient =
-    useQueryClient();
+  const mutation = useMutation({
+    mutationFn: createComment,
 
-  const mutation =
-    useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", blogId],
+      });
 
-      mutationFn:
-        createComment,
+      setShowReplyBox(false);
 
-      onSuccess: () => {
-
-        queryClient.invalidateQueries({
-
-          queryKey: [
-            "comments",
-            blogId,
-          ],
-
-        });
-
-        setShowReplyBox(false);
-
-        setShowReplies(true);
-
-      },
-
-    });
+      setShowReplies(true);
+    },
+  });
 
   // REPLY SUBMIT
 
   const handleReply = (data) => {
-
     mutation.mutate({
-
       blogId,
 
-      content:
-        data.content,
+      content: data.content,
 
-      parentComment:
-        comment._id,
-
+      parentComment: comment._id,
     });
-
   };
 
   // DIRECT REPLIES
 
-  const replies =
-    allComments.filter(
-      (reply) => {
+  const replies = allComments.filter((reply) => {
+    if (!reply.parentComment) {
+      return false;
+    }
 
-        if (
-          !reply.parentComment
-        ) {
-          return false;
-        }
+    // OBJECT CASE
 
-        // OBJECT CASE
+    if (typeof reply.parentComment === "object") {
+      return reply.parentComment._id === comment._id;
+    }
 
-        if (
-          typeof reply.parentComment ===
-          "object"
-        ) {
+    // STRING CASE
 
-          return (
-            reply.parentComment._id ===
-            comment._id
-          );
-
-        }
-
-        // STRING CASE
-
-        return (
-          reply.parentComment ===
-          comment._id
-        );
-
-      }
-    );
+    return reply.parentComment === comment._id;
+  });
 
   return (
-
     <div>
-
       {/* COMMENT */}
 
       <div
@@ -135,7 +83,6 @@ export default function CommentItem({
         gap-3
       "
       >
-
         {/* AVATAR */}
 
         <div
@@ -149,18 +96,10 @@ export default function CommentItem({
           font-semibold
           shrink-0
 
-          ${
-            isReply
-
-              ? "w-8 h-8 text-xs"
-
-              : "w-10 h-10 text-sm"
-          }
+          ${isReply ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm"}
         `}
         >
-
           U
-
         </div>
 
         {/* BODY */}
@@ -170,7 +109,6 @@ export default function CommentItem({
           flex-1
         "
         >
-
           {/* HEADER */}
 
           <div
@@ -181,16 +119,13 @@ export default function CommentItem({
             flex-wrap
           "
           >
-
             <p
               className="
               font-semibold
               text-sm
             "
             >
-
               @user
-
             </p>
 
             <p
@@ -199,21 +134,14 @@ export default function CommentItem({
               text-gray-500
             "
             >
-
               {formatDistanceToNow(
-
-                new Date(
-                  comment.createdAt
-                ),
+                new Date(comment.createdAt),
 
                 {
                   addSuffix: true,
-                }
-
+                },
               )}
-
             </p>
-
           </div>
 
           {/* CONTENT */}
@@ -226,9 +154,7 @@ export default function CommentItem({
             leading-7
           "
           >
-
             {comment.content}
-
           </p>
 
           {/* ACTIONS */}
@@ -241,21 +167,11 @@ export default function CommentItem({
             mt-2
           "
           >
-
             {/* REPLY */}
 
             {token && (
-
               <button
-
-                onClick={() =>
-
-                  setShowReplyBox(
-                    !showReplyBox
-                  )
-
-                }
-
+                onClick={() => setShowReplyBox(!showReplyBox)}
                 className="
                 text-sm
                 font-medium
@@ -263,59 +179,33 @@ export default function CommentItem({
                 hover:text-black
               "
               >
-
                 Reply
-
               </button>
-
             )}
-
           </div>
 
           {/* REPLY FORM */}
 
           {showReplyBox && (
-
             <div
               className="
               mt-4
             "
             >
-
               <CommentForm
-
-                onSubmit={
-                  handleReply
-                }
-
-                isPending={
-                  mutation.isPending
-                }
-
+                onSubmit={handleReply}
+                isPending={mutation.isPending}
                 placeholder="Reply..."
-
                 buttonText="Reply"
-
               />
-
             </div>
-
           )}
 
           {/* VIEW REPLIES */}
 
           {replies.length > 0 && (
-
             <button
-
-              onClick={() =>
-
-                setShowReplies(
-                  !showReplies
-                )
-
-              }
-
+              onClick={() => setShowReplies(!showReplies)}
               className="
               mt-4
               text-sm
@@ -324,33 +214,21 @@ export default function CommentItem({
               hover:text-blue-800
             "
             >
-
               {showReplies
-
                 ? "Hide replies"
-
                 : `${replies.length} ${
-                    replies.length > 1
-                      ? "replies"
-                      : "reply"
+                    replies.length > 1 ? "replies" : "reply"
                   }`}
-
             </button>
-
           )}
-
         </div>
-
       </div>
 
       {/* REPLIES SECTION */}
 
-      {showReplies &&
-
-        replies.length > 0 && (
-
-          <div
-            className="
+      {showReplies && replies.length > 0 && (
+        <div
+          className="
             ml-12
             mt-5
             space-y-5
@@ -358,36 +236,18 @@ export default function CommentItem({
             border-gray-200
             pl-5
           "
-          >
-
-            {replies.map(
-              (reply) => (
-
-                <CommentItem
-
-                  key={reply._id}
-
-                  comment={reply}
-
-                  allComments={
-                    allComments
-                  }
-
-                  blogId={blogId}
-
-                  isReply={true}
-
-                />
-
-              )
-            )}
-
-          </div>
-
+        >
+          {replies.map((reply) => (
+            <CommentItem
+              key={reply._id}
+              comment={reply}
+              allComments={allComments}
+              blogId={blogId}
+              isReply={true}
+            />
+          ))}
+        </div>
       )}
-
     </div>
-
   );
-
 }

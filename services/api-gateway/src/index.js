@@ -8,8 +8,7 @@ import helmet from "helmet";
 
 import morgan from "morgan";
 
-import rateLimit from
-"express-rate-limit";
+import rateLimit from "express-rate-limit";
 
 import {
   authProxy,
@@ -22,33 +21,22 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-  origin:
-    "https://blog-app-microservices-ten.vercel.app",
-}));
+app.use(cors());
 
 app.use(helmet());
 
 app.use(morgan("dev"));
 
-const limiter =
-  rateLimit({
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
 
-    windowMs:
-      15 * 60 * 1000,
-
-    max: 100,
-
-  });
+  max: 100,
+});
 
 app.use(limiter);
 
 app.get("/", (req, res) => {
-
-  res.send(
-    "API Gateway Running"
-  );
-
+  res.send("API Gateway Running");
 });
 
 // IMPORTANT
@@ -60,13 +48,8 @@ app.use(commentProxy);
 
 app.use(notificationProxy);
 
-const PORT =
-  process.env.PORT || 8000;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
-
-  console.log(
-    `API Gateway running on ${PORT}`
-  );
-
+  console.log(`API Gateway running on ${PORT}`);
 });

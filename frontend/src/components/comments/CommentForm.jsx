@@ -1,67 +1,41 @@
 "use client";
 
-import {
-  useForm,
-} from
-"react-hook-form";
+import { useForm } from "react-hook-form";
 
-export default function
-CommentForm({
-
+export default function CommentForm({
   onSubmit,
 
   isPending,
 
-  placeholder =
-    "Add to discussion...",
+  placeholder = "Add to discussion...",
 
-  buttonText =
-    "Comment",
-
+  buttonText = "Comment",
 }) {
-
   const {
-
     register,
 
     handleSubmit,
 
     reset,
-
   } = useForm();
 
-  const submitHandler =
-    (data) => {
+  const submitHandler = (data) => {
+    onSubmit(data);
 
-      onSubmit(data);
-
-      reset();
-
-    };
+    reset();
+  };
 
   return (
-
     <form
-
-      onSubmit={handleSubmit(
-        submitHandler
-      )}
-
+      onSubmit={handleSubmit(submitHandler)}
       className="
       mt-4
     "
     >
-
       <textarea
-
-        {...register(
-          "content"
-        )}
-
+        {...register("content")}
         placeholder={placeholder}
-
         rows={3}
-
         className="
         w-full
         border-b
@@ -80,11 +54,8 @@ CommentForm({
         mt-4
       "
       >
-
         <button
-
           disabled={isPending}
-
           className="
           bg-black
           text-white
@@ -94,19 +65,9 @@ CommentForm({
           text-sm
         "
         >
-
-          {isPending
-
-            ? "Posting..."
-
-            : buttonText}
-
+          {isPending ? "Posting..." : buttonText}
         </button>
-
       </div>
-
     </form>
-
   );
-
 }

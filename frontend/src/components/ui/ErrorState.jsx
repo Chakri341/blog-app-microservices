@@ -1,13 +1,5 @@
-export default function
-ErrorState({
-
-  message =
-    "Something went wrong",
-
-}) {
-
+export default function ErrorState({ message = "Something went wrong" }) {
   return (
-
     <div
       className="
       py-24
@@ -18,7 +10,6 @@ ErrorState({
       text-center
     "
     >
-
       {/* ICON */}
 
       <div
@@ -26,9 +17,7 @@ ErrorState({
         text-6xl
       "
       >
-
         ⚠️
-
       </div>
 
       {/* TITLE */}
@@ -40,9 +29,7 @@ ErrorState({
         font-bold
       "
       >
-
         Oops!
-
       </h2>
 
       {/* MESSAGE */}
@@ -53,13 +40,8 @@ ErrorState({
         text-gray-500
       "
       >
-
         {message}
-
       </p>
-
     </div>
-
   );
-
 }

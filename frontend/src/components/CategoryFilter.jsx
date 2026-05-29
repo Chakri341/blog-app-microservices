@@ -1,32 +1,13 @@
 "use client";
 
-const categories = [
+const categories = ["All", "Frontend", "Backend", "DevOps", "AI", "Mobile"];
 
-  "All",
-
-  "Frontend",
-
-  "Backend",
-
-  "DevOps",
-
-  "AI",
-
-  "Mobile",
-
-];
-
-export default function
-CategoryFilter({
-
+export default function CategoryFilter({
   category,
 
   setCategory,
-
 }) {
-
   return (
-
     <div
       className="
       flex
@@ -34,44 +15,23 @@ CategoryFilter({
       gap-3
     "
     >
-
-      {categories.map(
-        (item) => (
-
-          <button
-
-            key={item}
-
-            onClick={() =>
-              setCategory(item)
-            }
-
-            className={`
+      {categories.map((item) => (
+        <button
+          key={item}
+          onClick={() => setCategory(item)}
+          className={`
               px-4
               py-2
               rounded-full
               text-sm
               transition
 
-              ${
-                category === item
-
-                  ? "bg-black text-white"
-
-                  : "bg-gray-100"
-              }
+              ${category === item ? "bg-black text-white" : "bg-gray-100"}
             `}
-          >
-
-            {item}
-
-          </button>
-
-        )
-      )}
-
+        >
+          {item}
+        </button>
+      ))}
     </div>
-
   );
-
 }

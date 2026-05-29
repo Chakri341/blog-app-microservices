@@ -1,196 +1,129 @@
-import {
-  getChannel,
-} from "./connection.js";
+import { getChannel } from "./connection.js";
 
-import Notification from
-"../models/notification.model.js";
+import Notification from "../models/notification.model.js";
 
-import {
-  getIO,
-} from "../socket/socket.js";
+import { getIO } from "../socket/socket.js";
 
-const consumeEvents =
-  async () => {
+const consumeEvents = async () => {
+  try {
+    const channel = getChannel();
 
-    try {
+    // BLOG EVENTS
 
-      const channel =
-        getChannel();
+    const blogExchange = "blog_exchange";
 
-      // BLOG EVENTS
+    const blogQueue = "notification_blog_queue";
 
-      const blogExchange =
-        "blog_exchange";
+    await channel.assertExchange(
+      blogExchange,
 
-      const blogQueue =
-        "notification_blog_queue";
+      "topic",
 
-      await channel.assertExchange(
+      {
+        durable: true,
+      },
+    );
 
-        blogExchange,
+    await channel.assertQueue(blogQueue);
 
-        "topic",
+    await channel.bindQueue(
+      blogQueue,
 
-        {
-          durable: true,
-        }
+      blogExchange,
 
-      );
+      "blog.created",
+    );
 
-      await channel.assertQueue(
-        blogQueue
-      );
+    // COMMENT EVENTS
 
-      await channel.bindQueue(
+    const commentExchange = "comment_exchange";
 
-        blogQueue,
+    const commentQueue = "notification_comment_queue";
 
-        blogExchange,
+    await channel.assertExchange(
+      commentExchange,
 
-        "blog.created"
+      "topic",
 
-      );
+      {
+        durable: true,
+      },
+    );
 
-      // COMMENT EVENTS
+    await channel.assertQueue(commentQueue);
 
-      const commentExchange =
-        "comment_exchange";
+    await channel.bindQueue(
+      commentQueue,
 
-      const commentQueue =
-        "notification_comment_queue";
+      commentExchange,
 
-      await channel.assertExchange(
+      "comment.created",
+    );
 
-        commentExchange,
+    console.log("Waiting for events...");
 
-        "topic",
+    // BLOG CONSUMER
 
-        {
-          durable: true,
-        }
+    channel.consume(
+      blogQueue,
 
-      );
+      async (message) => {
+        const data = JSON.parse(message.content.toString());
 
-      await channel.assertQueue(
-        commentQueue
-      );
+        console.log("Blog Event Received");
 
-      await channel.bindQueue(
+        const notification = await Notification.create({
+          type: "BLOG_CREATED",
 
-        commentQueue,
+          userId: data.authorId,
 
-        commentExchange,
+          message: `New blog created: ${data.title}`,
+        });
 
-        "comment.created"
+        // REALTIME EVENT
 
-      );
+        getIO().emit(
+          "notification",
 
-      console.log(
-        "Waiting for events..."
-      );
+          notification,
+        );
 
-      // BLOG CONSUMER
+        channel.ack(message);
+      },
+    );
 
-      channel.consume(
+    // COMMENT CONSUMER
 
-        blogQueue,
+    channel.consume(
+      commentQueue,
 
-        async (message) => {
+      async (message) => {
+        const data = JSON.parse(message.content.toString());
 
-          const data =
-            JSON.parse(
-              message.content.toString()
-            );
+        console.log("Comment Event Received");
 
-          console.log(
-            "Blog Event Received"
-          );
+        const notification = await Notification.create({
+          type: "COMMENT_CREATED",
 
-          const notification =
-            await Notification.create({
+          userId: data.userId,
 
-              type:
-                "BLOG_CREATED",
+          message: `New comment added to blog ${data.blogId}`,
+        });
 
-              userId:
-                data.authorId,
+        // REALTIME EVENT
 
-              message:
-                `New blog created: ${data.title}`,
+        getIO().emit(
+          "notification",
 
-            });
+          notification,
+        );
 
-          // REALTIME EVENT
-
-          getIO().emit(
-
-            "notification",
-
-            notification
-
-          );
-
-          channel.ack(message);
-
-        }
-
-      );
-
-      // COMMENT CONSUMER
-
-      channel.consume(
-
-        commentQueue,
-
-        async (message) => {
-
-          const data =
-            JSON.parse(
-              message.content.toString()
-            );
-
-          console.log(
-            "Comment Event Received"
-          );
-
-          const notification =
-            await Notification.create({
-
-              type:
-                "COMMENT_CREATED",
-
-              userId:
-                data.userId,
-
-              message:
-                `New comment added to blog ${data.blogId}`,
-
-            });
-
-          // REALTIME EVENT
-
-          getIO().emit(
-
-            "notification",
-
-            notification
-
-          );
-
-          channel.ack(message);
-
-        }
-
-      );
-
-    } catch (error) {
-
-      console.log(
-        error.message
-      );
-
-    }
-
-  };
+        channel.ack(message);
+      },
+    );
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
 export default consumeEvents;

@@ -6,31 +6,21 @@ import dotenv from "dotenv";
 
 import http from "http";
 
-import connectDB from
-"./config/db.js";
+import connectDB from "./config/db.js";
 
-import connectRabbitMQ,
-{
-  getChannel,
-} from
-"./rabbitmq/connection.js";
+import connectRabbitMQ, { getChannel } from "./rabbitmq/connection.js";
 
-import consumeEvents from
-"./rabbitmq/consumer.js";
+import consumeEvents from "./rabbitmq/consumer.js";
 
-import notificationRoutes from
-"./routes/notification.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
-import {
-  initSocket,
-} from "./socket/socket.js";
+import { initSocket } from "./socket/socket.js";
 
 dotenv.config();
 
 const app = express();
 
-const server =
-  http.createServer(app);
+const server = http.createServer(app);
 
 initSocket(server);
 
@@ -38,62 +28,34 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use(
-  "/api/notifications",
-  notificationRoutes
-);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/", (req, res) => {
-
-  res.send(
-    "Notification Service Running"
-  );
-
+  res.send("Notification Service Running");
 });
 
-const waitForRabbitMQ =
-  async () => {
+const waitForRabbitMQ = async () => {
+  while (!getChannel()) {
+    console.log("Waiting for RabbitMQ...");
 
-    while (!getChannel()) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+};
 
-      console.log(
-        "Waiting for RabbitMQ..."
-      );
+const startServer = async () => {
+  await connectDB();
 
-      await new Promise(
-        (resolve) =>
-          setTimeout(
-            resolve,
-            2000
-          )
-      );
+  connectRabbitMQ();
 
-    }
+  await waitForRabbitMQ();
 
-  };
+  await consumeEvents();
 
-const startServer =
-  async () => {
+  const PORT = process.env.PORT || 8003;
 
-    await connectDB();
-
-    connectRabbitMQ();
-
-    await waitForRabbitMQ();
-
-    await consumeEvents();
-
-    const PORT =
-      process.env.PORT || 8003;
-
-    server.listen(PORT, () => {
-
-      console.log(
-        `Notification Service running on ${PORT}`
-      );
-
-    });
-
-  };
+  server.listen(PORT, () => {
+    console.log(`Notification Service running on ${PORT}`);
+  });
+};
 
 startServer();

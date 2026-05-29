@@ -4,17 +4,11 @@ import cors from "cors";
 
 import dotenv from "dotenv";
 
-import connectDB from
-"./config/db.js";
+import connectDB from "./config/db.js";
 
-import connectRabbitMQ,
-{
-  getChannel,
-} from
-"./rabbitmq/connection.js";
+import connectRabbitMQ, { getChannel } from "./rabbitmq/connection.js";
 
-import commentRoutes from
-"./routes/comment.routes.js";
+import commentRoutes from "./routes/comment.routes.js";
 
 dotenv.config();
 
@@ -24,60 +18,32 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use(
-  "/api/comments",
-  commentRoutes
-);
+app.use("/api/comments", commentRoutes);
 
 app.get("/", (req, res) => {
-
-  res.send(
-    "Comment Service Running"
-  );
-
+  res.send("Comment Service Running");
 });
 
-const waitForRabbitMQ =
-  async () => {
+const waitForRabbitMQ = async () => {
+  while (!getChannel()) {
+    console.log("Waiting for RabbitMQ...");
 
-    while (!getChannel()) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+};
 
-      console.log(
-        "Waiting for RabbitMQ..."
-      );
+const startServer = async () => {
+  await connectDB();
 
-      await new Promise(
-        (resolve) =>
-          setTimeout(
-            resolve,
-            2000
-          )
-      );
+  connectRabbitMQ();
 
-    }
+  await waitForRabbitMQ();
 
-  };
+  const PORT = process.env.PORT || 8004;
 
-const startServer =
-  async () => {
-
-    await connectDB();
-
-    connectRabbitMQ();
-
-    await waitForRabbitMQ();
-
-    const PORT =
-      process.env.PORT || 8004;
-
-    app.listen(PORT, () => {
-
-      console.log(
-        `Comment Service running on ${PORT}`
-      );
-
-    });
-
-  };
+  app.listen(PORT, () => {
+    console.log(`Comment Service running on ${PORT}`);
+  });
+};
 
 startServer();
