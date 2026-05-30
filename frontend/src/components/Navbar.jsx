@@ -92,13 +92,13 @@ export default function Navbar() {
               <Link href="/profile">
                 <button
                   className="
-      px-4
-      py-2
-      rounded-xl
-      border
-      hover:bg-gray-100
-      transition
-    "
+                    px-4
+                    py-2
+                    rounded-xl
+                    border
+                  hover:bg-gray-100
+                    transition
+                    cursor-pointer"
                 >
                   Profile
                 </button>
@@ -109,12 +109,13 @@ export default function Navbar() {
               <Link href="/create-blog">
                 <button
                   className="
-      px-4
-      py-2
-      rounded-xl
-      border
-      hover:bg-gray-100
-      transition
+                    px-4
+                    py-2
+                    rounded-xl
+                    border
+                  hover:bg-gray-100
+                    transition
+                    cursor-pointer
     "
                 >
                   Create
@@ -246,7 +247,6 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   logout();
-
                   setMobileOpen(false);
                 }}
                 className="
@@ -256,6 +256,7 @@ export default function Navbar() {
                 rounded-xl
                 bg-black
                 text-white
+                cursor-pointer
               "
               >
                 Logout

@@ -62,6 +62,7 @@ export default function NotificationBell() {
         justify-center
         text-xl
         shadow-lg
+        cursor-pointer
       "
       >
         🔔

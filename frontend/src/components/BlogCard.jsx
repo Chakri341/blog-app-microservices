@@ -89,21 +89,6 @@ export default function BlogCard({ blog }) {
             {blog.title}
           </h2>
 
-          {/* DESCRIPTION */}
-
-          <p
-            className="
-            mt-4
-            text-gray-600
-            text-sm
-            leading-7
-            line-clamp-3
-          "
-            dangerouslySetInnerHTML={{
-              __html: blog.content,
-            }}
-          ></p>
-
           {/* TAGS */}
 
           {tags?.length > 0 && (
@@ -115,7 +100,7 @@ export default function BlogCard({ blog }) {
               gap-2
             "
             >
-              {tags.slice(0, 3).map((tag) => (
+              {tags[0].split(",").splice(0,4).map((tag) => (
                 <span
                   key={tag}
                   className="
@@ -132,6 +117,21 @@ export default function BlogCard({ blog }) {
               ))}
             </div>
           )}
+
+          {/* DESCRIPTION */}
+
+          <p
+            className="
+            mt-4
+            text-gray-600
+            text-sm
+            leading-7
+            line-clamp-3
+          "
+            dangerouslySetInnerHTML={{
+              __html: blog.content,
+            }}
+          ></p>
 
           {/* FOOTER */}
 

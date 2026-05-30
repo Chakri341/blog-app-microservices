@@ -14,11 +14,7 @@ export default function LoginPage() {
 
   const setAuth = authStore((state) => state.setAuth);
 
-  const {
-    register,
-
-    handleSubmit,
-  } = useForm();
+  const { register, handleSubmit } = useForm();
 
   const onSubmit = async (data) => {
     try {

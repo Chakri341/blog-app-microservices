@@ -124,6 +124,9 @@ export default function SingleBlogPage({ params }) {
       />
     );
   }
+  const tags = Array.isArray(blog?.tags)
+    ? blog.tags.flatMap((tag) => tag.split(","))
+    : blog?.tags?.split(",");
 
   return (
     <div
@@ -208,8 +211,7 @@ export default function SingleBlogPage({ params }) {
           justify-between
           flex-wrap
           gap-5
-          pb-8
-          border-b
+         
         "
         >
           {/* LEFT */}
@@ -326,30 +328,30 @@ export default function SingleBlogPage({ params }) {
                 </button>
               </div>
             )}
-
-            {/* TAGS */}
-
-            {(Array.isArray(blog?.tags)
-              ? blog?.tags
-              : blog?.tags?.split(",")
-            )?.map((tag) => (
-              <span
-                key={tag}
-                className="
-                px-3
-                py-1
-                rounded-full
-                bg-black
-                text-white
-                text-xs
-              "
-              >
-                #{tag.trim()}
-              </span>
-            ))}
           </div>
         </div>
 
+
+        {/* TAGS */}
+
+        <div className="flex flex-wrap gap-2  pb-8 pt-4 mt-4  
+          border-b">
+          {tags?.map((tag) => (
+            <span
+              key={tag}
+              className="
+        px-3
+        py-1
+        rounded-full
+        bg-black
+        text-white
+        text-xs
+      "
+            >
+              #{tag.trim()}
+            </span>
+          ))}
+        </div>
         {/* CONTENT */}
 
         <div

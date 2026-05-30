@@ -11,11 +11,7 @@ import { registerUser } from "../../services/auth.service";
 export default function RegisterPage() {
   const router = useRouter();
 
-  const {
-    register,
-
-    handleSubmit,
-  } = useForm();
+  const { register, handleSubmit } = useForm();
 
   const onSubmit = async (data) => {
     try {
@@ -46,6 +42,7 @@ export default function RegisterPage() {
           className="
           text-2xl
           font-bold
+          m
         "
         >
           Register
